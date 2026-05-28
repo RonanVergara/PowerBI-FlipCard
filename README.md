@@ -4,9 +4,9 @@
 
 This project focuses on building a fully custom interactive Flip Card visual for Power BI.
 
-The goal is to create a reusable and highly customizable visual that behaves more like a modern web application component rather than a traditional Power BI visual.
+The goal is to create a reusable Power BI visual that behaves more like a modern web application component rather than a traditional Power BI visual.
 
-The visual should support advanced animations, clean UI/UX, extensive formatting options, and dynamic interactions without relying on bookmarks.
+The visual should support animations, clean UI/UX, extensive formatting options, and dynamic interactions without relying on bookmarks.
 
 ---
 
@@ -17,106 +17,49 @@ Create a Power BI custom visual where:
 * A card flips when clicked
 * Front and back content are fully customizable
 * Animations are smooth and modern
-* Users can configure the visual easily through the Power BI formatting pane
+* Users can configure the visual through the Power BI formatting pane
 * The visual feels similar to modern web UI components
 
 ---
 
-# ✨ Planned Features
+# 🏁 Current Status
 
-## 🔹 Core Features
+## Day 1 Completed
 
-* Click-to-flip interaction
-* Front and back card faces
-* Smooth 3D flip animation
-* Dynamic resizing
-* Responsive layout
-* Hover effects
-* Animation speed control
+### Setup Completed
 
----
+* [x] Installed Node.js
+* [x] Installed Power BI Visual SDK (`pbiviz`)
+* [x] Created Power BI custom visual project
+* [x] Opened project in VS Code
+* [x] Successfully executed:
 
-## 🔹 Front Card Customization
-
-Users should be able to customize:
-
-* Background color
-* Gradient background
-* Border color
-* Border thickness
-* Rounded corners
-* Shadow
-* Font family
-* Font size
-* Font color
-* Font weight
-* Text alignment
-* Padding
-* Icons
-* Images
-* Conditional formatting
-
----
-
-## 🔹 Back Card Customization
-
-Separate settings for:
-
-* Background
-* Border
-* Typography
-* Metrics
-* Additional details
-* Conditional formatting
-* KPI display
-* Secondary content
-
----
-
-# 🎨 UI/UX Goal
-
-The formatting pane should be:
-
-* Beginner-friendly
-* Organized
-* Clean
-* Grouped logically
-
-Example structure:
-
-```plaintext
-Flip Card Settings
-│
-├── General
-├── Animation
-├── Front Card
-│   ├── Background
-│   ├── Typography
-│   ├── Border
-│   └── Layout
-│
-├── Back Card
-│   ├── Background
-│   ├── Typography
-│   ├── Border
-│   └── Layout
-│
-└── Advanced
+```bash
+pbiviz package
 ```
 
+* [x] Generated `.pbiviz` package
+* [x] Created GitHub repository
+* [x] Created project documentation
+
 ---
 
-# 🧠 Technical Vision
+# 📂 Current Folder Structure
 
-This project aims to combine:
+```plaintext
+Power BI Custom Visual
+│
+├── PowerBI-FlipCard      (GitHub Repository / Documentation)
+│
+└── flipCardVisual        (Actual Power BI Custom Visual Project)
+```
 
-* Power BI Visual SDK
-* TypeScript
-* HTML
-* CSS
-* JavaScript animations
+Current status:
 
-to create a highly interactive visual component.
+* GitHub Repository exists
+* Power BI Visual builds successfully
+* No coding has started yet
+* Environment setup is complete
 
 ---
 
@@ -124,93 +67,115 @@ to create a highly interactive visual component.
 
 | Technology          | Purpose                   |
 | ------------------- | ------------------------- |
-| Power BI Visual SDK | Custom visual framework   |
-| TypeScript          | Main development language |
-| HTML/CSS            | UI styling                |
-| JavaScript          | Interactions & animations |
-| VS Code             | Development environment   |
-| GitHub              | Version control           |
+| Power BI Visual SDK | Custom Visual Framework   |
+| TypeScript          | Main Development Language |
+| HTML                | Structure                 |
+| CSS                 | Styling                   |
+| JavaScript          | Interactions              |
+| VS Code             | Development Environment   |
+| GitHub              | Version Control           |
 
 ---
 
-# 📂 Planned Repository Structure
-
-```plaintext
-PowerBI-FlipCard/
-│
-├── README.md
-├── src/
-├── assets/
-├── style/
-├── screenshots/
-├── demo/
-├── notes/
-├── dist/
-└── archive/
-```
-
----
-
-# 🚧 Development Phases
+# 🚧 Development Roadmap
 
 ## Phase 1 — Foundation
 
 * [x] Project Planning
-* [ ] Setup Power BI Visual SDK
-* [ ] Create Base Visual
+* [x] Power BI Visual SDK Setup
 * [ ] Render Static Card
+* [ ] Test Custom Visual inside Power BI
 
 ---
 
-## Phase 2 — Flip Animation
+## Phase 2 — Flip Card UI
 
-* [ ] Implement 3D flip animation
-* [ ] Add click interaction
-* [ ] Add front/back rendering
-* [ ] Add animation controls
-
----
-
-## Phase 3 — Formatting System
-
-* [ ] Front card settings
-* [ ] Back card settings
-* [ ] Typography controls
-* [ ] Border controls
-* [ ] Conditional formatting
-* [ ] Animation settings
+* [ ] Create Front Face
+* [ ] Create Back Face
+* [ ] Add Card Layout
+* [ ] Add CSS Styling
+* [ ] Add Click Interaction
+* [ ] Add Flip Animation
 
 ---
 
-## Phase 4 — Advanced Features
+## Phase 3 — Power BI Integration
 
-* [ ] Hover effects
-* [ ] Dynamic icons
+* [ ] Read Measure Values
+* [ ] Read Category Fields
+* [ ] Dynamic Text Rendering
+* [ ] Dynamic KPI Rendering
+* [ ] Selection Support
+
+---
+
+## Phase 4 — Formatting Pane
+
+* [ ] Title Settings
+* [ ] Colors
+* [ ] Typography
+* [ ] Borders
+* [ ] Shadows
+* [ ] Animation Controls
+
+---
+
+## Phase 5 — Advanced Features
+
+* [ ] Hover Effects
+* [ ] Icons
 * [ ] Images
-* [ ] KPI indicators
-* [ ] Responsive scaling
-* [ ] Performance optimization
+* [ ] KPI Indicators
+* [ ] Responsive Layout
+* [ ] Performance Optimization
 
 ---
 
-# 💡 Long-Term Vision
+# 🔥 Long-Term Vision
 
-Build a reusable Power BI visual system capable of delivering:
+Build a reusable Power BI visual capable of delivering:
 
 * Web-like interactions
 * Modern animations
-* Advanced customization
+* Rich customization
 * Better storytelling
 * Premium dashboard experiences
 
 ---
 
-# 🔥 Project Philosophy
+# 💡 Project Philosophy
 
-> Power BI visuals should feel interactive, alive, and modern — not static slides.
+Power BI visuals should feel interactive, alive, and modern — not static slides.
 
 ---
 
-# 🏁 Current Status
+# 📍 Next Session Starting Point
 
-### 🚧 Planning & Architecture Phase
+When returning to this project:
+
+1. Verify Git status.
+2. Verify which folder is connected to GitHub.
+3. Decide whether to merge folders into a single clean structure.
+4. Open:
+
+```plaintext
+flipCardVisual/src/visual.ts
+```
+
+5. Learn the Power BI Visual lifecycle.
+6. Render the first static card.
+
+Target visual:
+
+```plaintext
++----------------------+
+| Flip Card Visual     |
+| Hello Power BI       |
++----------------------+
+```
+
+No animation yet.
+
+Goal: Successfully display custom text inside a Power BI custom visual.
+
+After that, begin building the actual flip card.
