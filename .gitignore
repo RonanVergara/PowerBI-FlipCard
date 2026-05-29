@@ -1,0 +1,15 @@
+# Node
+node_modules/
+
+# Power BI build files
+dist/
+.tmp/
+
+# Build reports
+webpack.statistics*.html
+
+# VS Code
+.vscode/
+
+# Logs
+*.log
