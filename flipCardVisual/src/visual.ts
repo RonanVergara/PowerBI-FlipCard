@@ -14,6 +14,17 @@ import IVisualHost = powerbi.extensibility.visual.IVisualHost;
 import VisualConstructorOptions = powerbi.extensibility.visual.VisualConstructorOptions;
 import VisualUpdateOptions = powerbi.extensibility.visual.VisualUpdateOptions;
 
+interface CardData {
+    label: string;
+    frontTitle: string;
+    frontValue: string;
+    frontSubtitle: string;
+    backTitle: string;
+    backValue: string;
+    backSubtitle: string;
+    selectionId: ISelectionId | undefined;
+}
+
 export class Visual implements IVisual {
     private readonly target: HTMLElement;
     private readonly host: IVisualHost;
@@ -89,8 +100,9 @@ export class Visual implements IVisual {
         this.cardWrapper.style.height = `${options.viewport.height}px`;
 
         const dataView = options.dataViews && options.dataViews[0];
+        const cardData = this.getCardData(dataView);
 
-        if (!dataView || !dataView.categorical) {
+        if (!cardData) {
             this.currentSelectionId = undefined;
             this.hasActiveSelection = false;
             this.cardWrapper.classList.remove("is-selected");
@@ -99,48 +111,69 @@ export class Visual implements IVisual {
             return;
         }
 
+        this.currentSelectionId = cardData.selectionId;
+        this.renderCard(cardData);
+    }
+
+    private getCardData( dataView: DataView | undefined): CardData | undefined {
+        if (!dataView || !dataView.categorical) {
+            return undefined
+        }
         const labelColumn = this.findCategoryByRole(dataView, "cardLabel");
         const cardMeasure = this.findMeasureByRole(dataView, "cardValue");
         const detailMeasure = this.findMeasureByRole(dataView, "detailValue");
 
         if (!cardMeasure) {
-            this.currentSelectionId = undefined;
-            this.hasActiveSelection = false;
-            this.cardWrapper.classList.remove("is-selected");
-            this.showEmptyState();
-
-            return;
+            return undefined
         }
-        
-        this.currentSelectionId = this.createCategorySelectionId(labelColumn);
 
         const labelText = this.getCategoryLabel(labelColumn);
+
         const cardMeasureName = cardMeasure.source.displayName || "Card Value";
         const cardMeasureValue = this.getFirstValue(cardMeasure);
         const formattedCardMeasureValue = this.formatValue(cardMeasureValue, cardMeasure);
 
-        this.frontLabel.textContent = labelText;
-        this.frontTitle.textContent = cardMeasureName;
-        this.frontValue.textContent = formattedCardMeasureValue;
-        this.frontSubtitle.textContent = "Click card to view details";
-
-        this.backLabel.textContent = labelText;
+        const selectionId = this.createCategorySelectionId(labelColumn);
 
         if (!detailMeasure) {
-            this.backTitle.textContent = "Details";
-            this.backValue.textContent = cardMeasureName;
-            this.backSubtitle.textContent = `Current value: ${formattedCardMeasureValue}`;
-
-            return;
+            return {
+                label: labelText,
+                frontTitle: cardMeasureName,
+                frontValue: formattedCardMeasureValue,
+                frontSubtitle: "Click card to view details",
+                backTitle: "Details",
+                backValue: cardMeasureName,
+                backSubtitle: `Current value: ${formattedCardMeasureValue}`,
+                selectionId: selectionId
+            };
         }
 
         const detailMeasureName = detailMeasure.source.displayName || "Detail Value";
         const detailMeasureValue = this.getFirstValue(detailMeasure);
         const formattedDetailMeasureValue = this.formatValue(detailMeasureValue, detailMeasure);
 
-        this.backTitle.textContent = detailMeasureName;
-        this.backValue.textContent = formattedDetailMeasureValue;
-        this.backSubtitle.textContent = `Front value: ${formattedCardMeasureValue}`;
+        return {
+                label: labelText,
+                frontTitle: cardMeasureName,
+                frontValue: formattedCardMeasureValue,
+                frontSubtitle: "Click card to view details",
+                backTitle: detailMeasureName,
+                backValue: formattedDetailMeasureValue,
+                backSubtitle: `Front value: ${formattedCardMeasureValue}`,
+                selectionId: selectionId
+        };
+    }
+
+    private renderCard(cardData: CardData): void {
+        this.frontLabel.textContent = cardData.label;
+        this.frontTitle.textContent = cardData.frontTitle;
+        this.frontValue.textContent = cardData.frontValue;
+        this.frontSubtitle.textContent = cardData.frontSubtitle;
+
+        this.backLabel.textContent = cardData.label;
+        this.backTitle.textContent = cardData.backTitle;
+        this.backValue.textContent = cardData.backValue;
+        this.backSubtitle.textContent = cardData.backSubtitle;
     }
 
     private onCardClick(event: MouseEvent): void {

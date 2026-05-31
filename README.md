@@ -2,94 +2,283 @@
 
 ## 📌 Project Overview
 
-This project focuses on building a fully custom interactive Flip Card visual for Power BI.
+This project is a custom Power BI visual that creates an interactive flip card.
 
-The goal is to create a reusable Power BI visual that behaves more like a modern web application component rather than a traditional Power BI visual.
+The visual behaves more like a modern web UI component than a traditional static Power BI card.
 
-The visual should support animations, clean UI/UX, extensive formatting options, dynamic Power BI data integration, Power BI selection behavior, and user configuration through the Power BI formatting pane.
+The long-term goal is to build a reusable Power BI custom visual with:
 
----
-
-# 🎯 Main Goal
-
-Create a Power BI custom visual where:
-
-* A card flips when clicked
-* Front and back content are fully customizable
-* Measures from Power BI can be displayed dynamically
-* Power BI measure formatting is respected
-* Category labels such as Vendor, Team, Agent, or Call Driver can be shown
-* The card can select the current category value
-* Clicking the selected card again clears the selection
-* The selected card has visible active-state styling
-* Animations are smooth and modern
-* Users can configure the visual through the Power BI formatting pane
-* The visual feels similar to modern web UI components
-* The visual can be reused across different Power BI reports
+* Click-to-flip animation
+* Front and back card content
+* Dynamic Power BI measure values
+* Power BI measure formatting support
+* Power BI category selection behavior
+* Formatting pane customization
+* Multi-card support
+* Modern dashboard-style UI/UX
 
 ---
 
-# 🏁 Current Status
+## 🧠 Learning-First Project Rule
 
-## Foundation Completed
+This is not only a development project.
 
-### Setup Completed
+This is also a learning project.
 
-* [x] Installed Node.js
-* [x] Installed Power BI Visual SDK (`pbiviz`)
-* [x] Created Power BI custom visual project
-* [x] Opened project in VS Code
-* [x] Successfully executed:
+The main goal is for the developer to understand and master the code through repeated small updates.
 
-```bash
-pbiviz package
+When helping with this project:
+
+* Do not rush to provide full-file replacements unless requested.
+* Prefer step-by-step edits.
+* Show exactly where to edit.
+* Explain what each code block does.
+* Explain why the change matters.
+* Keep each step small.
+* After each milestone, test before moving forward.
+* Prioritize learning and repetition over speed.
+
+Preferred teaching format:
+
+```plaintext
+Step number
+What we are changing
+Where to find it
+What to add / replace
+Why it works
+What to test
 ```
 
-* [x] Generated `.pbiviz` package
+---
+
+## 🎯 Main Goal
+
+Create a reusable Power BI custom visual where:
+
+* A card flips when clicked
+* The front face shows a main KPI
+* The back face shows a detail KPI
+* Category labels such as Vendor, Team, Agent, or Call Driver can be shown
+* Power BI measure formatting is respected
+* Clicking the card selects the current category value
+* Clicking the selected card again clears the selection
+* Selected state has visible border/glow feedback
+* The visual can later support multiple cards and formatting pane options
+
+---
+
+## ✅ Current Working Features
+
+The visual currently supports:
+
+* Static flip card layout
+* Front card face
+* Back card face
+* Smooth flip animation
+* Dynamic Power BI field values
+* `Card Label` category field
+* `Card Value` measure field
+* `Detail Value` measure field
+* Power BI measure formatting
+* Percentage formatting such as `85.8%` instead of `0.858`
+* Power BI selection support
+* Click again to clear selection
+* Selected border/glow feedback
+* Successful `.pbiviz` package build
+* Successful Power BI Desktop testing
+
+---
+
+## 🧩 Current Field Wells
+
+```plaintext
+Card Label   → Category shown on the card, such as Vendor or Agent
+Card Value   → Main measure shown on the front face
+Detail Value → Detail measure shown on the back face
+```
+
+Example setup:
+
+```plaintext
+Card Label   = Vendor
+Card Value   = Total Calls
+Detail Value = CSAT %
+```
+
+Example front card:
+
+```plaintext
+HGS
+Total Calls
+16.63K
+Click card to view details
+```
+
+Example back card:
+
+```plaintext
+HGS
+CSAT %
+85.8%
+Front value: 16.63K
+```
+
+---
+
+## 🏁 Completed Milestones
+
+### Phase 1 — Foundation
+
+* [x] Installed Node.js
+* [x] Installed Power BI Visual SDK
+* [x] Created Power BI custom visual project
 * [x] Created GitHub repository
-* [x] Created project documentation
-* [x] Fixed folder structure
 * [x] Added `.gitignore`
 * [x] Removed build artifacts from Git tracking
-* [x] Rendered first static custom visual
-* [x] Successfully tested custom visual inside Power BI Desktop
+* [x] Built `.pbiviz` package successfully
+* [x] Tested first custom visual in Power BI Desktop
 
----
+### Phase 2 — Flip Card UI
 
-## Flip Card UI Completed
-
-* [x] Created front card face
-* [x] Created back card face
-* [x] Added card layout
-* [x] Added CSS / LESS styling
+* [x] Created card wrapper
+* [x] Created front face
+* [x] Created back face
+* [x] Added LESS/CSS styling
 * [x] Added click interaction
-* [x] Added smooth flip animation
-* [x] Successfully tested flip interaction inside Power BI Desktop
-* [x] Committed and pushed working flip-card milestone to GitHub
+* [x] Added flip animation
+* [x] Tested flip behavior in Power BI Desktop
 
----
+### Phase 3 — Power BI Data Integration
 
-## Power BI Data Integration Progress
-
-* [x] Added `Card Value` measure field
-* [x] Added `Detail Value` measure field
-* [x] Added `Card Label` category field
-* [x] Read dynamic measure values from Power BI
-* [x] Read dynamic category label from Power BI
-* [x] Display main measure on front card face
-* [x] Display detail measure on back card face
-* [x] Display category label such as Vendor, Team, Agent, or Call Driver
+* [x] Added `Card Label`
+* [x] Added `Card Value`
+* [x] Added `Detail Value`
+* [x] Read dynamic Power BI measure values
+* [x] Read dynamic Power BI category labels
+* [x] Display front measure dynamically
+* [x] Display back measure dynamically
 * [x] Respect Power BI measure formatting
-* [x] Display percentage measures correctly, such as `85.8%` instead of `0.858`
-* [x] Added Power BI selection support
-* [x] Clicking the card selects the current category value
-* [x] Clicking the selected card again clears the selection
-* [x] Added selected-state visual feedback with border/glow styling
-* [x] Successfully tested dynamic data, measure formatting, selection, clear-selection behavior, and selected-state styling inside Power BI Desktop
+* [x] Support percentage formatting
+* [x] Add Power BI selection behavior
+* [x] Add click-again-to-clear behavior
+* [x] Add selected card border/glow feedback
+
+### Phase 3.5 — Code Refactor
+
+* [x] Added `CardData` interface
+* [x] Added `getCardData()` helper
+* [x] Added `renderCard()` helper
+* [x] Shortened `update()` so it controls the flow instead of doing everything directly
+* [x] Tested after refactor and confirmed the visual still works
 
 ---
 
-# 📂 Current Folder Structure
+## 🧠 Current Code Pattern
+
+The current `visual.ts` structure is being refactored toward cleaner responsibilities.
+
+Current mental model:
+
+```plaintext
+Power BI sends data
+↓
+update() receives the update
+↓
+getCardData() prepares one CardData object
+↓
+renderCard() displays the card
+↓
+onCardClick() handles flip and Power BI selection
+```
+
+Important learning concept:
+
+```plaintext
+One function should have one main job.
+```
+
+Current helper roles:
+
+```plaintext
+getCardData() = prepares the card information
+renderCard()  = puts the card information on screen
+onCardClick() = handles flip and selection
+```
+
+---
+
+## ⚠️ Current Limitation
+
+The visual currently supports only one card.
+
+It uses the first visible category value.
+
+Example:
+
+```plaintext
+Card Label = Vendor
+First visible value = HGS
+The card represents HGS
+```
+
+Future improvement:
+
+* Convert one `CardData` object into multiple `CardData` objects
+* Render multiple cards
+* Allow each card to represent its own category value
+* Allow each card to have its own selection ID
+
+---
+
+## 🚧 Development Roadmap
+
+### Current Focus
+
+```plaintext
+Clean the current single-card code before moving to multi-card support.
+```
+
+Next cleanup targets:
+
+* [ ] Add `resizeCard()` helper
+* [ ] Add `clearSelectionState()` helper
+* [ ] Keep `update()` even cleaner
+* [ ] Test after each small refactor
+* [ ] Commit clean working milestone
+
+### Next Major Feature
+
+```plaintext
+Multi-card support
+```
+
+Planned future work:
+
+* [ ] Convert `CardData` into an array of cards
+* [ ] Loop through category rows
+* [ ] Create one card per category value
+* [ ] Give each card its own selection ID
+* [ ] Add responsive layout for multiple cards
+
+### Later Features
+
+* [ ] Formatting pane support
+* [ ] Front card color settings
+* [ ] Back card color settings
+* [ ] Typography settings
+* [ ] Border settings
+* [ ] Shadow settings
+* [ ] Animation speed setting
+* [ ] Label visibility toggle
+* [ ] Subtitle visibility toggle
+* [ ] Hover effects
+* [ ] Tooltips
+* [ ] High contrast support
+* [ ] Keyboard navigation
+
+---
+
+## 📂 Project Folder Structure
 
 ```plaintext
 Power BI Custom Visual
@@ -102,7 +291,9 @@ Power BI Custom Visual
     └── flipCardVisual
         ├── assets
         ├── src
+        │   └── visual.ts
         ├── style
+        │   └── visual.less
         ├── capabilities.json
         ├── package.json
         ├── package-lock.json
@@ -110,439 +301,121 @@ Power BI Custom Visual
         └── tsconfig.json
 ```
 
-Current status:
-
-* GitHub repository contains documentation and actual visual source code
-* Power BI Visual builds successfully
-* `.pbiviz` package generates successfully
-* Flip card animation works inside Power BI Desktop
-* Main measure displays dynamically
-* Detail measure displays dynamically
-* Category label displays dynamically
-* Power BI measure formatting is respected
-* Power BI selection behavior is supported
-* Selected card state has visible border/glow feedback
-* Clicking a selected card again clears the selection
-* Build artifacts such as `.tmp`, `dist`, and webpack reports are ignored by Git
-* Phase 1 Foundation is complete
-* Phase 2 Flip Card UI is complete
-* Phase 3 Power BI Integration is mostly complete
-
 ---
 
-# 🛠️ Tech Stack
+## 🧪 Build Command
 
-| Technology                    | Purpose                         |
-| ----------------------------- | ------------------------------- |
-| Power BI Visual SDK           | Custom Visual Framework         |
-| TypeScript                    | Main Development Language       |
-| HTML / DOM                    | Visual Structure                |
-| LESS / CSS                    | Styling                         |
-| JavaScript Logic              | Interactions                    |
-| Power BI Selection API        | Cross-visual selection behavior |
-| Power BI Formatting Utilities | Measure formatting support      |
-| VS Code                       | Development Environment         |
-| GitHub                        | Version Control                 |
-| Excel                         | Sample Data Source              |
-| Power BI Desktop              | Testing Environment             |
-
----
-
-# 🚧 Development Roadmap
-
-## Phase 1 — Foundation
-
-* [x] Project Planning
-* [x] Power BI Visual SDK Setup
-* [x] Repository Cleanup
-* [x] Render Static Card
-* [x] Test Custom Visual inside Power BI
-
----
-
-## Phase 2 — Flip Card UI
-
-* [x] Create Front Face
-* [x] Create Back Face
-* [x] Add Card Layout
-* [x] Add CSS Styling
-* [x] Add Click Interaction
-* [x] Add Flip Animation
-
----
-
-## Phase 3 — Power BI Integration
-
-* [x] Read Measure Values
-* [x] Read Category Fields
-* [x] Dynamic Text Rendering
-* [x] Dynamic KPI Rendering
-* [x] Respect Power BI Measure Formatting
-* [x] Selection Support
-* [x] Selected State Visual Feedback
-* [x] Click Again to Clear Selection
-* [ ] Refactor into a `CardData` model before multi-card support
-* [ ] Multi-row / multi-card support
-
----
-
-## Phase 4 — Formatting Pane
-
-* [ ] Add Modern Formatting Pane Support
-* [ ] Title Settings
-* [ ] Front Card Colors
-* [ ] Back Card Colors
-* [ ] Typography
-* [ ] Borders
-* [ ] Shadows
-* [ ] Animation Controls
-* [ ] Label Visibility Toggle
-* [ ] Subtitle Visibility Toggle
-
----
-
-## Phase 5 — Advanced Features
-
-* [ ] Hover Effects
-* [ ] Icons
-* [ ] Images
-* [ ] KPI Indicators
-* [ ] Conditional Formatting
-* [ ] Responsive Layout
-* [ ] Performance Optimization
-* [ ] High Contrast Support
-* [ ] Tooltips
-* [ ] Context Menu
-* [ ] Keyboard Navigation
-
----
-
-# ✅ Current Working Visual
-
-The custom visual currently displays a working interactive flip card inside Power BI Desktop.
-
-## Current Field Wells
-
-```plaintext
-Card Label   → Vendor / Team / Agent / Call Driver
-Card Value   → Main measure shown on the front face
-Detail Value → Detail measure shown on the back face
-```
-
-## Example Front Face
-
-```plaintext
-+----------------------+
-| HGS                  |
-| Total Calls          |
-| 12,345               |
-| Click card to view   |
-| details              |
-+----------------------+
-```
-
-## Example Back Face
-
-```plaintext
-+----------------------+
-| HGS                  |
-| CSAT %               |
-| 85.8%                |
-| Front value: 12,345  |
-+----------------------+
-```
-
-The card flips when clicked.
-
-The card can also select the current `Card Label` value in Power BI. Clicking the selected card again clears the selection.
-
----
-
-# ✅ Recently Completed Milestones
-
-## Measure Formatting Respected
-
-The visual now respects Power BI measure formatting.
-
-Examples:
-
-```plaintext
-CSAT % now displays as 85.8%
-Transfer Rate % displays as a percentage
-Whole-number measures display cleanly
-Decimal values follow Power BI measure formatting
-```
-
-This was completed by using Power BI formatting utilities instead of basic manual number formatting.
-
----
-
-## Selection Support Added
-
-The visual now supports Power BI selection behavior.
-
-Current behavior:
-
-```plaintext
-Click card once  → selects the current Card Label value
-Click card again → clears the selection
-```
-
-Example:
-
-```plaintext
-Card Label = Vendor
-Visible value = HGS
-
-Clicking the card selects Vendor = HGS.
-Other visuals can react to that selection.
-```
-
-The selected card also shows a visible active border/glow so the selected state is easier to identify.
-
----
-
-# 📊 Sample Data File
-
-A sample Excel file was created for testing the visual in Power BI.
-
-The sample data includes realistic BPO-style fields such as:
-
-* Date
-* Vendor
-* Team
-* Agent
-* Tenure Band
-* Call Driver
-* Calls
-* AHT
-* CSAT
-* QA Score
-* Transfers
-* Holds
-* FCR
-* Escalations
-
-The sample file also includes reference DAX measures and test scenarios for the Flip Card visual.
-
-Example test setup:
-
-```plaintext
-Card Label   = Vendor
-Card Value   = Total Calls
-Detail Value = Average AHT
-```
-
-Another example:
-
-```plaintext
-Card Label   = Call Driver
-Card Value   = CSAT %
-Detail Value = Transfer Rate %
-```
-
----
-
-# ⚠️ Known Current Warnings
-
-When running:
-
-```bash
-pbiviz package
-```
-
-Current non-blocking warnings may appear:
-
-* `pwsh is not recognized`
-* `Format Pane` required soon
-* Optional Power BI visual feature warnings such as:
-
-  * Allow Interactions
-  * Color Palette
-  * Context Menu
-  * High Contrast
-  * Highlight Data
-  * Keyboard Navigation
-  * Landing Page
-  * Localizations
-  * Rendering Events
-  * Selection Across Visuals
-  * Tooltips
-
-These warnings are not currently blocking the build.
-
-Important successful output:
-
-```plaintext
-Lint check completed.
-Package created!
-done   Build completed successfully
-```
-
----
-
-# ⚠️ Known Current Limitation
-
-## Single-Card / First Visible Category Only
-
-The visual currently supports one card and selects the first visible category value.
-
-Example:
-
-```plaintext
-Card Label = Vendor
-First visible value = HGS
-```
-
-The card represents and selects that first visible value.
-
-Future improvement:
-
-* Refactor the visual into a `CardData` model
-* Prepare the code for multiple card objects
-* Add multi-row / multi-card support
-* Allow each card to represent its own category value
-
----
-
-# 📍 Next Session Starting Point
-
-When returning to this project:
-
-1. Open terminal in:
-
-```plaintext
-C:\Power BI Custom Visual\PowerBI-FlipCard
-```
-
-2. Verify Git status:
-
-```bash
-git status
-```
-
-Expected result:
-
-```plaintext
-nothing to commit, working tree clean
-```
-
-3. Open the visual project:
-
-```plaintext
-C:\Power BI Custom Visual\PowerBI-FlipCard\flipCardVisual
-```
-
-4. Open these files:
-
-```plaintext
-flipCardVisual/src/visual.ts
-flipCardVisual/capabilities.json
-flipCardVisual/style/visual.less
-```
-
-5. Continue with the next development target:
-
-```plaintext
-Refactor into a CardData model
-```
-
-Next target:
-
-```plaintext
-Create a clean CardData interface
-Move Power BI data preparation into a helper method
-Keep the visual behavior the same
-Prepare the code for future multi-card support
-```
-
-Goal:
-
-* Separate data preparation from rendering
-* Make `update()` cleaner and easier to understand
-* Prepare for multi-row / multi-card support
-* Keep measure formatting, card flipping, selection, clear selection, and selected border working
-
----
-
-# 🧪 Build Command
-
-Run this command from the visual project folder:
+Run this from the visual project folder:
 
 ```bash
 cd "C:\Power BI Custom Visual\PowerBI-FlipCard\flipCardVisual"
 pbiviz package
 ```
 
-Expected success output:
+Expected successful result:
 
 ```plaintext
 Lint check completed.
 Package created!
-done   Build completed successfully
+Build completed successfully.
 ```
+
+Some warnings are currently expected and are not blocking:
+
+* `pwsh is not recognized`
+* Formatting pane recommendations
+* High contrast recommendations
+* Keyboard navigation recommendations
+* Tooltip recommendations
 
 ---
 
-# 💾 Git Workflow
+## 💾 Git Workflow
 
-Use this workflow after every successful milestone:
+Use this after every successful tested milestone:
 
 ```bash
 cd "C:\Power BI Custom Visual\PowerBI-FlipCard"
 git status
+git diff
 git add .
 git commit -m "Your milestone message here"
 git push
 ```
 
-Current suggested next commit message:
+Current suggested commit message:
 
 ```bash
-git commit -m "Add selection support and selected state feedback"
-```
-
-Future refactor milestone commit message:
-
-```bash
-git commit -m "Refactor visual data into CardData model"
+git commit -m "Refactor visual data rendering into CardData model"
 ```
 
 ---
 
-# 🧠 Learning Notes From This Milestone
+## 📍 Next Session Starting Point
 
-This milestone introduced several important TypeScript and Power BI custom visual concepts:
+When continuing this project, first inspect:
 
-* `import` brings code from packages into the file
-* A `class` is a reusable object blueprint with properties and methods
-* `private` means only the class can access that property or method
-* `readonly` means the property reference should not be replaced after setup
-* `constructor` runs once when Power BI creates the visual
-* `this` in TypeScript is similar to `self` in Python
-* `const` creates a variable that should not be reassigned
-* `void` can mean a function returns nothing, or that a returned Promise is intentionally ignored
-* TypeScript can control CSS classes through `classList.add`, `classList.remove`, and `classList.toggle`
-* CSS / LESS controls how visual states such as selected, flipped, and hover should look
+```plaintext
+flipCardVisual/src/visual.ts
+flipCardVisual/capabilities.json
+flipCardVisual/style/visual.less
+README.md
+```
+
+Then confirm the current focus:
+
+```plaintext
+Current focus:
+Continue learning-first refactor of the single-card visual.
+Next small cleanup:
+Add resizeCard() and clearSelectionState() helpers.
+```
+
+Do not jump directly to advanced features unless the current milestone is tested and committed.
 
 ---
 
-# 🔥 Long-Term Vision
+## 🟢 Best Prompt to Start a New ChatGPT Session
 
-Build a reusable Power BI visual capable of delivering:
+Use this prompt when starting a new session:
 
-* Web-like interactions
-* Modern animations
-* Rich customization
-* Better storytelling
+```plaintext
+Here is my GitHub repo:
+
+https://github.com/RonanVergara/PowerBI-FlipCard
+
+Please read the README and current code first before suggesting changes.
+
+Important:
+This is a learning-first project. Do not rush.
+Do not give me full-file replacement unless I ask.
+Teach me step by step.
+For every change, show:
+1. Where to find the code
+2. What exact small part to add or replace
+3. Why it works
+4. What to test before moving on
+
+Current goal:
+Continue from the README’s “Next Session Starting Point.”
+Help me understand and master the code through repeated small updates.
+```
+
+---
+
+## 🔥 Long-Term Vision
+
+Build a reusable custom Power BI visual that makes dashboards feel more modern, interactive, and web-like.
+
+This visual should eventually support:
+
+* Modern KPI cards
+* Animated dashboard storytelling
+* Reusable custom visual design
+* Power BI interactions without bookmarks
+* Rich formatting options
+* Multiple cards driven by data
 * Premium dashboard experiences
-* Reusable custom KPI cards
-* Data-driven dashboard interactions without relying on bookmarks
 
----
-
-# 💡 Project Philosophy
-
-Power BI visuals should feel interactive, alive, and modern — not static slides.
-
-This project is also a learning project. Each milestone should be documented clearly so the progress can be passed between ChatGPT, Codex, GitHub, and future development sessions without losing context.
+```
+```
