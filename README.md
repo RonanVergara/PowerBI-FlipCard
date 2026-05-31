@@ -49,6 +49,15 @@ Why it works
 What to test
 ```
 
+Important working style:
+
+* Related safe changes may be grouped together.
+* CSS-only layout changes can be grouped when they belong to the same purpose.
+* Small helper-only changes can be grouped when they are directly related.
+* Avoid combining unrelated changes in one step.
+* Do not combine DOM creation, selection behavior, multi-card rendering, and styling all at once.
+* Keep the visual stable after every step.
+
 ---
 
 ## 🎯 Main Goal
@@ -84,6 +93,10 @@ The visual currently supports:
 * Power BI selection support
 * Click again to clear selection
 * Selected border/glow feedback
+* Single-card row-based data preparation
+* Row-index-aware label, value, and selection logic
+* Card container wrapper
+* Flex-ready card container layout
 * Successful `.pbiviz` package build
 * Successful Power BI Desktop testing
 
@@ -163,19 +176,37 @@ Front value: 16.63K
 * [x] Add click-again-to-clear behavior
 * [x] Add selected card border/glow feedback
 
-### Phase 3.5 — Code Refactor
+### Phase 3.5 — Single-Card Code Refactor
 
 * [x] Added `CardData` interface
-* [x] Added `getCardData()` helper
+* [x] Added `getCardDataForRow()` helper
 * [x] Added `renderCard()` helper
+* [x] Added `resizeCard()` helper
+* [x] Added `clearSelectionState()` helper
 * [x] Shortened `update()` so it controls the flow instead of doing everything directly
-* [x] Tested after refactor and confirmed the visual still works
+* [x] Moved row-based logic into helper functions
+* [x] Tested after each refactor and confirmed the visual still works
+
+### Phase 4 — Multi-Card Preparation Started
+
+* [x] Introduced `rowIndex` concept
+* [x] Updated category label logic to use `rowIndex`
+* [x] Updated measure value logic to use `rowIndex`
+* [x] Updated selection ID logic to use `rowIndex`
+* [x] Renamed `getCardData()` to `getCardDataForRow()`
+* [x] Added `getCategoryRowCount()` helper
+* [x] Added row count guard before rendering
+* [x] Added `cardContainer` wrapper
+* [x] Added `.flip-card-container` styling
+* [x] Prepared container layout with flex, wrap, gap, and hidden overflow
+* [x] Fixed temporary scrollbar flash during flip animation by using `overflow: hidden`
+* [x] Tested after each small change in Power BI Desktop
 
 ---
 
 ## 🧠 Current Code Pattern
 
-The current `visual.ts` structure is being refactored toward cleaner responsibilities.
+The current `visual.ts` structure is being refactored toward cleaner responsibilities and future multi-card support.
 
 Current mental model:
 
@@ -184,7 +215,11 @@ Power BI sends data
 ↓
 update() receives the update
 ↓
-getCardData() prepares one CardData object
+resizeCard() sizes the visual
+↓
+getCategoryRowCount() checks available category rows
+↓
+getCardDataForRow(dataView, 0) prepares one CardData object for row 0
 ↓
 renderCard() displays the card
 ↓
@@ -200,33 +235,119 @@ One function should have one main job.
 Current helper roles:
 
 ```plaintext
-getCardData() = prepares the card information
-renderCard()  = puts the card information on screen
-onCardClick() = handles flip and selection
+resizeCard()                = sizes the card area from Power BI viewport
+clearSelectionState()       = removes selected visual state
+getCategoryRowCount()       = counts how many category rows Power BI provided
+getCardDataForRow()         = prepares card information for one row index
+getCategoryLabel()          = gets the category label for one row index
+getValueAtRow()             = gets a measure value for one row index
+createCategorySelectionId() = creates Power BI selection ID for one row index
+renderCard()                = puts the card information on screen
+onCardClick()               = handles flip and selection
 ```
+
+---
+
+## 🧱 Current DOM Structure
+
+The visual currently uses a card container wrapper.
+
+Current structure:
+
+```plaintext
+target
+└── flip-card-container
+    └── flip-card-wrapper
+        └── flip-card-inner
+            ├── flip-card-front
+            └── flip-card-back
+```
+
+This prepares the visual for future multi-card rendering.
+
+Future structure:
+
+```plaintext
+target
+└── flip-card-container
+    ├── flip-card-wrapper
+    ├── flip-card-wrapper
+    ├── flip-card-wrapper
+    ├── flip-card-wrapper
+    └── flip-card-wrapper
+```
+
+The number of cards should eventually depend on how many category rows Power BI provides.
+
+Example:
+
+```plaintext
+rowIndex 0 → HGS
+rowIndex 1 → Vendor A
+rowIndex 2 → Vendor B
+rowIndex 3 → Vendor C
+rowIndex 4 → Vendor D
+```
+
+---
+
+## 🎨 Current Layout CSS Direction
+
+The card container is now prepared for multiple cards.
+
+Current container layout:
+
+```less
+.flip-card-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+```
+
+Important note:
+
+```plaintext
+overflow: auto caused temporary scrollbars during the flip animation.
+overflow: hidden fixed the scrollbar flash.
+```
+
+Scrolling behavior for many cards should be designed intentionally later.
 
 ---
 
 ## ⚠️ Current Limitation
 
-The visual currently supports only one card.
+The visual currently still renders only one card.
 
-It uses the first visible category value.
+It now uses row-based helper logic, but `update()` still calls only row `0`.
 
-Example:
+Current behavior:
 
 ```plaintext
 Card Label = Vendor
 First visible value = HGS
+rowIndex = 0
 The card represents HGS
+```
+
+Current single-card render flow:
+
+```plaintext
+getCardDataForRow(dataView, 0)
 ```
 
 Future improvement:
 
-* Convert one `CardData` object into multiple `CardData` objects
-* Render multiple cards
-* Allow each card to represent its own category value
-* Allow each card to have its own selection ID
+* Loop through category rows
+* Call `getCardDataForRow(dataView, rowIndex)` for each row
+* Create one card per category value
+* Give each card its own selection ID
+* Render all cards inside `.flip-card-container`
 
 ---
 
@@ -235,16 +356,37 @@ Future improvement:
 ### Current Focus
 
 ```plaintext
-Clean the current single-card code before moving to multi-card support.
+Prepare the visual for multi-card rendering while keeping the current single-card behavior stable.
 ```
 
-Next cleanup targets:
+Completed cleanup targets:
 
-* [ ] Add `resizeCard()` helper
-* [ ] Add `clearSelectionState()` helper
-* [ ] Keep `update()` even cleaner
-* [ ] Test after each small refactor
-* [ ] Commit clean working milestone
+* [x] Add `resizeCard()` helper
+* [x] Add `clearSelectionState()` helper
+* [x] Keep `update()` cleaner
+* [x] Test after each small refactor
+* [x] Commit clean working milestones
+
+Current multi-card preparation status:
+
+* [x] Make data helpers row-index aware
+* [x] Add row count helper
+* [x] Add card container wrapper
+* [x] Add card container layout CSS
+* [x] Keep single-card behavior working
+
+Next small target:
+
+```plaintext
+Create a reusable helper for building card DOM elements.
+```
+
+Important:
+
+```plaintext
+Do not jump directly into full multi-card rendering yet.
+First prepare reusable DOM creation safely.
+```
 
 ### Next Major Feature
 
@@ -254,11 +396,14 @@ Multi-card support
 
 Planned future work:
 
-* [ ] Convert `CardData` into an array of cards
+* [ ] Create reusable card DOM helper
+* [ ] Convert one fixed card into repeatable card creation
+* [ ] Convert one `CardData` object into multiple `CardData` objects
 * [ ] Loop through category rows
 * [ ] Create one card per category value
 * [ ] Give each card its own selection ID
-* [ ] Add responsive layout for multiple cards
+* [ ] Add responsive layout behavior for multiple cards
+* [ ] Test selection behavior per card
 
 ### Later Features
 
@@ -330,6 +475,28 @@ Some warnings are currently expected and are not blocking:
 
 ---
 
+## 🧪 Current Test Checklist
+
+After each change, test:
+
+```plaintext
+Card still fills the visual area.
+Card still flips.
+Selection still works.
+Click again still clears selection.
+Values and percentage formatting still work.
+Resize the visual smaller and bigger.
+```
+
+For layout changes, also test:
+
+```plaintext
+No temporary vertical scrollbar during flip.
+No temporary horizontal scrollbar during flip.
+```
+
+---
+
 ## 💾 Git Workflow
 
 Use this after every successful tested milestone:
@@ -341,12 +508,13 @@ git diff
 git add .
 git commit -m "Your milestone message here"
 git push
+git status
 ```
 
 Current suggested commit message:
 
 ```bash
-git commit -m "Refactor visual data rendering into CardData model"
+git commit -m "Prepare multi-card layout and update project status"
 ```
 
 ---
@@ -366,12 +534,36 @@ Then confirm the current focus:
 
 ```plaintext
 Current focus:
-Continue learning-first refactor of the single-card visual.
-Next small cleanup:
-Add resizeCard() and clearSelectionState() helpers.
+Continue learning-first preparation for multi-card support.
+
+Current status:
+Single-card visual still works.
+Row-based data helpers are ready.
+Card container wrapper exists.
+Container layout is flex-ready.
+Latest tested CSS uses:
+display: flex;
+flex-wrap: wrap;
+gap: 12px;
+overflow: hidden;
+
+Next small step:
+Create a reusable helper for building card DOM elements.
 ```
 
-Do not jump directly to advanced features unless the current milestone is tested and committed.
+Do not jump directly to full multi-card rendering yet.
+
+Before moving forward, confirm:
+
+```plaintext
+git status
+```
+
+Expected:
+
+```plaintext
+nothing to commit, working tree clean
+```
 
 ---
 
@@ -387,7 +579,8 @@ https://github.com/RonanVergara/PowerBI-FlipCard
 Please read the README and current code first before suggesting changes.
 
 Important:
-This is a learning-first project. Do not rush.
+This is a learning-first project.
+Do not rush.
 Do not give me full-file replacement unless I ask.
 Teach me step by step.
 For every change, show:
@@ -398,7 +591,15 @@ For every change, show:
 
 Current goal:
 Continue from the README’s “Next Session Starting Point.”
-Help me understand and master the code through repeated small updates.
+
+Current phase:
+We are preparing for multi-card support, but the visual should still remain stable as a single-card visual until each small step is tested.
+
+Latest known direction:
+Next small step is to create a reusable helper for building card DOM elements.
+
+Also:
+You may group related safe changes together, especially CSS-only or small helper-only changes, but do not combine unrelated changes like DOM creation, selection behavior, and multi-card rendering in one big step.
 ```
 
 ---
@@ -416,6 +617,3 @@ This visual should eventually support:
 * Rich formatting options
 * Multiple cards driven by data
 * Premium dashboard experiences
-
-```
-```
