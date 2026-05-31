@@ -5,6 +5,11 @@
             "displayName": "Card Value",
             "name": "cardValue",
             "kind": "Measure"
+        },
+        {
+            "displayName": "Detail Value",
+            "name": "detailValue",
+            "kind": "Measure"
         }
     ],
     "dataViewMappings": [
@@ -13,11 +18,27 @@
                 {
                     "cardValue": {
                         "max": 1
+                    },
+                    "detailValue": {
+                        "max": 1
                     }
                 }
             ],
-            "single": {
-                "role": "cardValue"
+            "categorical": {
+                "values": {
+                    "select": [
+                        {
+                            "bind": {
+                                "to": "cardValue"
+                            }
+                        },
+                        {
+                            "bind": {
+                                "to": "detailValue"
+                            }
+                        }
+                    ]
+                }
             }
         }
     ],
