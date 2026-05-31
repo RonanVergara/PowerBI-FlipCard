@@ -2,6 +2,11 @@
     "privileges": [],
     "dataRoles": [
         {
+            "displayName": "Card Label",
+            "name": "cardLabel",
+            "kind": "Grouping"
+        },
+        {
             "displayName": "Card Value",
             "name": "cardValue",
             "kind": "Measure"
@@ -16,6 +21,9 @@
         {
             "conditions": [
                 {
+                    "cardLabel": {
+                        "max": 1
+                    },
                     "cardValue": {
                         "max": 1
                     },
@@ -25,6 +33,11 @@
                 }
             ],
             "categorical": {
+                "categories": {
+                    "for": {
+                        "in": "cardLabel"
+                    }
+                },
                 "values": {
                     "select": [
                         {
