@@ -11,6 +11,15 @@ export class Visual implements IVisual {
     private readonly target: HTMLElement;
     private readonly cardWrapper: HTMLDivElement;
     private readonly cardInner: HTMLDivElement;
+
+    private readonly frontTitle: HTMLDivElement;
+    private readonly frontValue: HTMLDivElement;
+    private readonly frontSubtitle: HTMLDivElement;
+
+    private readonly backTitle: HTMLDivElement;
+    private readonly backValue: HTMLDivElement;
+    private readonly backSubtitle: HTMLDivElement;
+
     private isFlipped: boolean = false;
 
     constructor(options: VisualConstructorOptions) {
@@ -23,19 +32,27 @@ export class Visual implements IVisual {
         this.cardInner = document.createElement("div");
         this.cardInner.className = "flip-card-inner";
 
-        const frontFace = this.createCardFace(
-            "front",
-            "Total Volume",
-            "12,345",
-            "Click card to view details"
-        );
+        const frontFace = document.createElement("div");
+        frontFace.className = "flip-card-face flip-card-front";
 
-        const backFace = this.createCardFace(
-            "back",
-            "Details",
-            "Clicked / flipped",
-            "This is the back face"
-        );
+        this.frontTitle = this.createTextElement("flip-card-title", "Add a measure");
+        this.frontValue = this.createTextElement("flip-card-value", "No value");
+        this.frontSubtitle = this.createTextElement("flip-card-subtitle", "Drag a measure into Card Value");
+
+        frontFace.appendChild(this.frontTitle);
+        frontFace.appendChild(this.frontValue);
+        frontFace.appendChild(this.frontSubtitle);
+
+        const backFace = document.createElement("div");
+        backFace.className = "flip-card-face flip-card-back";
+
+        this.backTitle = this.createTextElement("flip-card-title", "Details");
+        this.backValue = this.createTextElement("flip-card-value", "No measure");
+        this.backSubtitle = this.createTextElement("flip-card-subtitle", "Click again to return");
+
+        backFace.appendChild(this.backTitle);
+        backFace.appendChild(this.backValue);
+        backFace.appendChild(this.backSubtitle);
 
         this.cardInner.appendChild(frontFace);
         this.cardInner.appendChild(backFace);
@@ -51,33 +68,52 @@ export class Visual implements IVisual {
     public update(options: VisualUpdateOptions): void {
         this.cardWrapper.style.width = `${options.viewport.width}px`;
         this.cardWrapper.style.height = `${options.viewport.height}px`;
+
+        const dataView = options.dataViews && options.dataViews[0];
+
+        if (!dataView || !dataView.single) {
+            this.frontTitle.textContent = "Add a measure";
+            this.frontValue.textContent = "No value";
+            this.frontSubtitle.textContent = "Drag a measure into Card Value";
+
+            this.backTitle.textContent = "Details";
+            this.backValue.textContent = "No measure";
+            this.backSubtitle.textContent = "Waiting for Power BI data";
+
+            return;
+        }
+
+        const measureName = dataView.metadata.columns[0]?.displayName || "Measure";
+        const measureValue = dataView.single.value;
+
+        this.frontTitle.textContent = measureName;
+        this.frontValue.textContent = this.formatValue(measureValue);
+        this.frontSubtitle.textContent = "Click card to view details";
+
+        this.backTitle.textContent = "Details";
+        this.backValue.textContent = measureName;
+        this.backSubtitle.textContent = `Current value: ${this.formatValue(measureValue)}`;
     }
 
-    private createCardFace(
-        side: "front" | "back",
-        titleText: string,
-        valueText: string,
-        subtitleText: string
-    ): HTMLDivElement {
-        const face = document.createElement("div");
-        face.className = `flip-card-face flip-card-${side}`;
+    private createTextElement(className: string, text: string): HTMLDivElement {
+        const element = document.createElement("div");
+        element.className = className;
+        element.textContent = text;
 
-        const title = document.createElement("div");
-        title.className = "flip-card-title";
-        title.textContent = titleText;
+        return element;
+    }
 
-        const value = document.createElement("div");
-        value.className = "flip-card-value";
-        value.textContent = valueText;
+    private formatValue(value: unknown): string {
+        if (value === null || value === undefined) {
+            return "No value";
+        }
 
-        const subtitle = document.createElement("div");
-        subtitle.className = "flip-card-subtitle";
-        subtitle.textContent = subtitleText;
+        if (typeof value === "number") {
+            return new Intl.NumberFormat("en-US", {
+                maximumFractionDigits: 2
+            }).format(value);
+        }
 
-        face.appendChild(title);
-        face.appendChild(value);
-        face.appendChild(subtitle);
-
-        return face;
+        return String(value);
     }
 }
