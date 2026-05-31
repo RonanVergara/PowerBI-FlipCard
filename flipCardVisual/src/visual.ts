@@ -136,7 +136,7 @@ export class Visual implements IVisual {
         }
 
         const rowIndex = 0;
-        const labelText = this.getCategoryLabel(labelColumn);
+        const labelText = this.getCategoryLabel(labelColumn, rowIndex);
 
         const cardMeasureName = cardMeasure.source.displayName || "Card Value";
         const cardMeasureValue = this.getFirstValue(cardMeasure);
@@ -277,12 +277,12 @@ export class Visual implements IVisual {
             .createSelectionId();
     }
 
-    private getCategoryLabel(categoryColumn: DataViewCategoryColumn | undefined): string {
+    private getCategoryLabel(categoryColumn: DataViewCategoryColumn | undefined, rowIndex: number): string {
         if (!categoryColumn || !categoryColumn.values || categoryColumn.values.length === 0) {
             return "All";
         }
 
-        return this.formatValue(categoryColumn.values[0]);
+        return this.formatValue(categoryColumn.values[rowIndex]);
     }
 
     private getFirstValue(valueColumn: DataViewValueColumn): unknown {
