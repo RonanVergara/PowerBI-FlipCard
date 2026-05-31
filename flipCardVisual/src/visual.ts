@@ -30,6 +30,7 @@ export class Visual implements IVisual {
     private readonly host: IVisualHost;
     private readonly selectionManager: ISelectionManager;
 
+    private readonly cardContainer: HTMLDivElement;
     private readonly cardWrapper: HTMLDivElement;
     private readonly cardInner: HTMLDivElement;
 
@@ -52,6 +53,9 @@ export class Visual implements IVisual {
         this.host = options.host;
         this.selectionManager = this.host.createSelectionManager();
         this.target.classList.add("flip-card-visual-root");
+
+        this.cardContainer = document.createElement("div");
+        this.cardContainer.className = "flip-card-container";
 
         this.cardWrapper = document.createElement("div");
         this.cardWrapper.className = "flip-card-wrapper";
@@ -88,7 +92,8 @@ export class Visual implements IVisual {
         this.cardInner.appendChild(frontFace);
         this.cardInner.appendChild(backFace);
         this.cardWrapper.appendChild(this.cardInner);
-        this.target.appendChild(this.cardWrapper);
+        this.cardContainer.appendChild(this.cardWrapper);
+        this.target.appendChild(this.cardContainer);
 
         this.cardWrapper.addEventListener("click", (event: MouseEvent) => {
             this.onCardClick(event);
