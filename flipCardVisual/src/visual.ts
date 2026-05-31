@@ -270,9 +270,11 @@ export class Visual implements IVisual {
             return undefined;
         }
 
+        const rowIndex = 0;
+
         return this.host
             .createSelectionIdBuilder()
-            .withCategory(categoryColumn, 0)
+            .withCategory(categoryColumn, rowIndex)
             .createSelectionId();
     }
 
