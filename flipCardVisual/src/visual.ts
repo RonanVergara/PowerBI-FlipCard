@@ -172,6 +172,17 @@ export class Visual implements IVisual {
         };
     }
 
+    
+    private getCategoryRowCount(dataView: DataView | undefined): number {
+        const labelColumn = dataView ? this.findCategoryByRole(dataView, "cardLabel") : undefined;
+
+        if (!labelColumn || !labelColumn.values) {
+            return 1;
+        }
+
+        return labelColumn.values.length;
+    }
+
     private renderCard(cardData: CardData): void {
         this.frontLabel.textContent = cardData.label;
         this.frontTitle.textContent = cardData.frontTitle;
