@@ -41,6 +41,11 @@ pbiviz package
 * [x] Generated `.pbiviz` package
 * [x] Created GitHub repository
 * [x] Created project documentation
+* [x] Fixed folder structure
+* [x] Added `.gitignore`
+* [x] Removed build artifacts from Git tracking
+* [x] Rendered first static custom visual
+* [x] Successfully tested custom visual inside Power BI Desktop
 
 ---
 
@@ -49,17 +54,30 @@ pbiviz package
 ```plaintext
 Power BI Custom Visual
 │
-├── PowerBI-FlipCard      (GitHub Repository / Documentation)
-│
-└── flipCardVisual        (Actual Power BI Custom Visual Project)
+└── PowerBI-FlipCard
+    │
+    ├── README.md
+    ├── .gitignore
+    │
+    └── flipCardVisual
+        ├── assets
+        ├── src
+        ├── style
+        ├── capabilities.json
+        ├── package.json
+        ├── package-lock.json
+        ├── pbiviz.json
+        └── tsconfig.json
 ```
 
 Current status:
 
-* GitHub Repository exists
+* GitHub repository contains documentation and actual visual source code
 * Power BI Visual builds successfully
-* No coding has started yet
-* Environment setup is complete
+* `.pbiviz` package generates successfully
+* First static card displays correctly in Power BI Desktop
+* Build artifacts such as `.tmp`, `dist`, and webpack reports are ignored by Git
+* Phase 1 Foundation is complete
 
 ---
 
@@ -69,9 +87,9 @@ Current status:
 | ------------------- | ------------------------- |
 | Power BI Visual SDK | Custom Visual Framework   |
 | TypeScript          | Main Development Language |
-| HTML                | Structure                 |
-| CSS                 | Styling                   |
-| JavaScript          | Interactions              |
+| HTML / DOM          | Visual Structure          |
+| LESS / CSS          | Styling                   |
+| JavaScript Logic    | Interactions              |
 | VS Code             | Development Environment   |
 | GitHub              | Version Control           |
 
@@ -83,8 +101,9 @@ Current status:
 
 * [x] Project Planning
 * [x] Power BI Visual SDK Setup
-* [ ] Render Static Card
-* [ ] Test Custom Visual inside Power BI
+* [x] Repository Cleanup
+* [x] Render Static Card
+* [x] Test Custom Visual inside Power BI
 
 ---
 
@@ -131,6 +150,115 @@ Current status:
 
 ---
 
+# ✅ Current Working Visual
+
+The custom visual currently displays a static card inside Power BI Desktop:
+
+```plaintext
++----------------------+
+| Flip Card Visual     |
+| Hello Power BI       |
++----------------------+
+```
+
+No animation yet.
+
+The goal of this stage was to confirm that custom TypeScript and LESS styling can render successfully inside Power BI.
+
+---
+
+# ⚠️ Known Current Warnings
+
+When running:
+
+```bash
+pbiviz package
+```
+
+Current non-blocking warnings may appear:
+
+* `pwsh is not recognized`
+* Optional Power BI visual feature warnings such as:
+
+  * Allow Interactions
+  * Color Palette
+  * Context Menu
+  * High Contrast
+  * Tooltips
+
+These are not blocking the build.
+
+Important successful output:
+
+```plaintext
+Lint check completed.
+done   Build completed successfully
+```
+
+---
+
+# 📍 Next Session Starting Point
+
+When returning to this project:
+
+1. Open terminal in:
+
+```plaintext
+C:\Power BI Custom Visual\PowerBI-FlipCard
+```
+
+2. Verify Git status:
+
+```bash
+git status
+```
+
+3. Commit current static-card milestone if not yet committed:
+
+```bash
+git add .
+git commit -m "Render first static flip card"
+git push
+```
+
+4. Open:
+
+```plaintext
+flipCardVisual/src/visual.ts
+flipCardVisual/style/visual.less
+```
+
+5. Start Phase 2:
+
+```plaintext
+Build actual flip card UI
+```
+
+Next target:
+
+```plaintext
+Front Face:
++----------------------+
+| Total Volume         |
+| 12,345               |
++----------------------+
+
+Back Face:
++----------------------+
+| Details              |
+| Clicked / flipped    |
++----------------------+
+```
+
+Goal:
+
+* Create front and back card faces
+* Add click interaction
+* Add smooth flip animation
+* Keep build successful with zero lint errors
+
+---
+
 # 🔥 Long-Term Vision
 
 Build a reusable Power BI visual capable of delivering:
@@ -146,36 +274,3 @@ Build a reusable Power BI visual capable of delivering:
 # 💡 Project Philosophy
 
 Power BI visuals should feel interactive, alive, and modern — not static slides.
-
----
-
-# 📍 Next Session Starting Point
-
-When returning to this project:
-
-1. Verify Git status.
-2. Verify which folder is connected to GitHub.
-3. Decide whether to merge folders into a single clean structure.
-4. Open:
-
-```plaintext
-flipCardVisual/src/visual.ts
-```
-
-5. Learn the Power BI Visual lifecycle.
-6. Render the first static card.
-
-Target visual:
-
-```plaintext
-+----------------------+
-| Flip Card Visual     |
-| Hello Power BI       |
-+----------------------+
-```
-
-No animation yet.
-
-Goal: Successfully display custom text inside a Power BI custom visual.
-
-After that, begin building the actual flip card.
