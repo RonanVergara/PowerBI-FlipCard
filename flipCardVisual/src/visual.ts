@@ -135,13 +135,14 @@ export class Visual implements IVisual {
             return undefined
         }
 
+        const rowIndex = 0;
         const labelText = this.getCategoryLabel(labelColumn);
 
         const cardMeasureName = cardMeasure.source.displayName || "Card Value";
         const cardMeasureValue = this.getFirstValue(cardMeasure);
         const formattedCardMeasureValue = this.formatValue(cardMeasureValue, cardMeasure);
 
-        const selectionId = this.createCategorySelectionId(labelColumn);
+        const selectionId = this.createCategorySelectionId(labelColumn, rowIndex);
 
         if (!detailMeasure) {
             return {
@@ -265,12 +266,10 @@ export class Visual implements IVisual {
         return undefined;
     }
 
-    private createCategorySelectionId(categoryColumn: DataViewCategoryColumn | undefined): ISelectionId | undefined {
+    private createCategorySelectionId(categoryColumn: DataViewCategoryColumn | undefined, rowIndex: number): ISelectionId | undefined {
         if (!categoryColumn || !categoryColumn.values || categoryColumn.values.length === 0) {
             return undefined;
         }
-
-        const rowIndex = 0;
 
         return this.host
             .createSelectionIdBuilder()
