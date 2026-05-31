@@ -99,7 +99,8 @@ export class Visual implements IVisual {
         this.resizeCard(options);
 
         const dataView = options.dataViews && options.dataViews[0];
-        const cardData = this.getCardDataForRow(dataView, 0);
+        const rowCount = this.getCategoryRowCount(dataView);
+        const cardData = rowCount > 0 ? this.getCardDataForRow(dataView, 0) : undefined;
 
         if (!cardData) {
             this.currentSelectionId = undefined;
