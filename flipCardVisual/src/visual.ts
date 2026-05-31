@@ -1,6 +1,7 @@
 "use strict";
 
 import powerbi from "powerbi-visuals-api";
+import { valueFormatter } from "powerbi-visuals-utils-formattingutils";
 import "./../style/visual.less";
 
 import DataView = powerbi.DataView;
@@ -99,10 +100,11 @@ export class Visual implements IVisual {
         const labelText = this.getCategoryLabel(labelColumn);
         const cardMeasureName = cardMeasure.source.displayName || "Card Value";
         const cardMeasureValue = this.getFirstValue(cardMeasure);
+        const formattedCardMeasureValue = this.formatValue(cardMeasureValue, cardMeasure);
 
         this.frontLabel.textContent = labelText;
         this.frontTitle.textContent = cardMeasureName;
-        this.frontValue.textContent = this.formatValue(cardMeasureValue);
+        this.frontValue.textContent = formattedCardMeasureValue;
         this.frontSubtitle.textContent = "Click card to view details";
 
         this.backLabel.textContent = labelText;
@@ -110,17 +112,18 @@ export class Visual implements IVisual {
         if (!detailMeasure) {
             this.backTitle.textContent = "Details";
             this.backValue.textContent = cardMeasureName;
-            this.backSubtitle.textContent = `Current value: ${this.formatValue(cardMeasureValue)}`;
+            this.backSubtitle.textContent = `Current value: ${formattedCardMeasureValue}`;
 
             return;
         }
 
         const detailMeasureName = detailMeasure.source.displayName || "Detail Value";
         const detailMeasureValue = this.getFirstValue(detailMeasure);
+        const formattedDetailMeasureValue = this.formatValue(detailMeasureValue, detailMeasure);
 
         this.backTitle.textContent = detailMeasureName;
-        this.backValue.textContent = this.formatValue(detailMeasureValue);
-        this.backSubtitle.textContent = `Front value: ${this.formatValue(cardMeasureValue)}`;
+        this.backValue.textContent = formattedDetailMeasureValue;
+        this.backSubtitle.textContent = `Front value: ${formattedCardMeasureValue}`;
     }
 
     private showEmptyState(): void {
@@ -195,15 +198,23 @@ export class Visual implements IVisual {
         return valueColumn.values[0];
     }
 
-    private formatValue(value: unknown): string {
+    private formatValue(value: unknown, valueColumn?: DataViewValueColumn): string {
         if (value === null || value === undefined) {
             return "No value";
         }
 
         if (typeof value === "number") {
-            return new Intl.NumberFormat("en-US", {
-                maximumFractionDigits: 2
-            }).format(value);
+            const formatString = valueColumn && valueColumn.source ? valueColumn.source.format : undefined;
+
+            const formatter = valueFormatter.create({
+                format: formatString,
+                value: value,
+                formatSingleValues: true,
+                allowFormatBeautification: true,
+                cultureSelector: "en-US"
+            });
+
+            return formatter.format(value);
         }
 
         return String(value);
