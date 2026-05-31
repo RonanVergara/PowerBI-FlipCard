@@ -96,16 +96,14 @@ export class Visual implements IVisual {
     }
 
     public update(options: VisualUpdateOptions): void {
-        this.cardWrapper.style.width = `${options.viewport.width}px`;
-        this.cardWrapper.style.height = `${options.viewport.height}px`;
+        this.resizeCard(options);
 
         const dataView = options.dataViews && options.dataViews[0];
         const cardData = this.getCardData(dataView);
 
         if (!cardData) {
             this.currentSelectionId = undefined;
-            this.hasActiveSelection = false;
-            this.cardWrapper.classList.remove("is-selected");
+            this.clearSelectionState();
             this.showEmptyState();
 
             return;
@@ -113,6 +111,16 @@ export class Visual implements IVisual {
 
         this.currentSelectionId = cardData.selectionId;
         this.renderCard(cardData);
+    }
+
+    private resizeCard(options: VisualUpdateOptions): void {
+        this.cardWrapper.style.width = `${options.viewport.width}px`;
+        this.cardWrapper.style.height = `${options.viewport.height}px`;
+    }
+
+    private clearSelectionState(): void {
+        this.hasActiveSelection = false;
+        this.cardWrapper.classList.remove("is-selected");
     }
 
     private getCardData( dataView: DataView | undefined): CardData | undefined {
@@ -186,8 +194,7 @@ export class Visual implements IVisual {
 
         if (this.hasActiveSelection) {
             void this.selectionManager.clear().then(() => {
-                this.hasActiveSelection = false;
-                this.cardWrapper.classList.remove("is-selected");
+                this.clearSelectionState();
             });
             return;
         }
