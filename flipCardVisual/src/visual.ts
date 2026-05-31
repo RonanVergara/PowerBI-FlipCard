@@ -139,7 +139,7 @@ export class Visual implements IVisual {
         const labelText = this.getCategoryLabel(labelColumn, rowIndex);
 
         const cardMeasureName = cardMeasure.source.displayName || "Card Value";
-        const cardMeasureValue = this.getFirstValue(cardMeasure);
+        const cardMeasureValue = this.getValueAtRow(cardMeasure, rowIndex);
         const formattedCardMeasureValue = this.formatValue(cardMeasureValue, cardMeasure);
 
         const selectionId = this.createCategorySelectionId(labelColumn, rowIndex);
@@ -158,7 +158,7 @@ export class Visual implements IVisual {
         }
 
         const detailMeasureName = detailMeasure.source.displayName || "Detail Value";
-        const detailMeasureValue = this.getFirstValue(detailMeasure);
+        const detailMeasureValue = this.getValueAtRow(detailMeasure, rowIndex);
         const formattedDetailMeasureValue = this.formatValue(detailMeasureValue, detailMeasure);
 
         return {
@@ -285,12 +285,12 @@ export class Visual implements IVisual {
         return this.formatValue(categoryColumn.values[rowIndex]);
     }
 
-    private getFirstValue(valueColumn: DataViewValueColumn): unknown {
-        if (!valueColumn.values || valueColumn.values.length === 0) {
+    private getValueAtRow(valueColumn: DataViewValueColumn, rowIndex: number): unknown {
+        if (!valueColumn.values || valueColumn.values.length <= rowIndex) {
             return undefined;
         }
 
-        return valueColumn.values[0];
+        return valueColumn.values[rowIndex];
     }
 
     private formatValue(value: unknown, valueColumn?: DataViewValueColumn): string {
