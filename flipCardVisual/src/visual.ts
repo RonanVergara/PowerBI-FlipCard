@@ -99,7 +99,7 @@ export class Visual implements IVisual {
         this.resizeCard(options);
 
         const dataView = options.dataViews && options.dataViews[0];
-        const cardData = this.getCardData(dataView);
+        const cardData = this.getCardDataForRow(dataView, 0);
 
         if (!cardData) {
             this.currentSelectionId = undefined;
@@ -123,7 +123,7 @@ export class Visual implements IVisual {
         this.cardWrapper.classList.remove("is-selected");
     }
 
-    private getCardData( dataView: DataView | undefined): CardData | undefined {
+    private getCardDataForRow(dataView: DataView | undefined, rowIndex: number): CardData | undefined {
         if (!dataView || !dataView.categorical) {
             return undefined
         }
@@ -135,7 +135,6 @@ export class Visual implements IVisual {
             return undefined
         }
 
-        const rowIndex = 0;
         const labelText = this.getCategoryLabel(labelColumn, rowIndex);
 
         const cardMeasureName = cardMeasure.source.displayName || "Card Value";
