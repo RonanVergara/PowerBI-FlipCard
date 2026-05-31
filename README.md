@@ -6,7 +6,7 @@ This project focuses on building a fully custom interactive Flip Card visual for
 
 The goal is to create a reusable Power BI visual that behaves more like a modern web application component rather than a traditional Power BI visual.
 
-The visual should support animations, clean UI/UX, extensive formatting options, dynamic Power BI data integration, and user configuration through the Power BI formatting pane.
+The visual should support animations, clean UI/UX, extensive formatting options, dynamic Power BI data integration, Power BI selection behavior, and user configuration through the Power BI formatting pane.
 
 ---
 
@@ -17,7 +17,11 @@ Create a Power BI custom visual where:
 * A card flips when clicked
 * Front and back content are fully customizable
 * Measures from Power BI can be displayed dynamically
+* Power BI measure formatting is respected
 * Category labels such as Vendor, Team, Agent, or Call Driver can be shown
+* The card can select the current category value
+* Clicking the selected card again clears the selection
+* The selected card has visible active-state styling
 * Animations are smooth and modern
 * Users can configure the visual through the Power BI formatting pane
 * The visual feels similar to modern web UI components
@@ -75,8 +79,13 @@ pbiviz package
 * [x] Display main measure on front card face
 * [x] Display detail measure on back card face
 * [x] Display category label such as Vendor, Team, Agent, or Call Driver
-* [x] Successfully tested dynamic data inside Power BI Desktop
-* [x] Committed and pushed current working data-integration milestone to GitHub
+* [x] Respect Power BI measure formatting
+* [x] Display percentage measures correctly, such as `85.8%` instead of `0.858`
+* [x] Added Power BI selection support
+* [x] Clicking the card selects the current category value
+* [x] Clicking the selected card again clears the selection
+* [x] Added selected-state visual feedback with border/glow styling
+* [x] Successfully tested dynamic data, measure formatting, selection, clear-selection behavior, and selected-state styling inside Power BI Desktop
 
 ---
 
@@ -110,26 +119,32 @@ Current status:
 * Main measure displays dynamically
 * Detail measure displays dynamically
 * Category label displays dynamically
+* Power BI measure formatting is respected
+* Power BI selection behavior is supported
+* Selected card state has visible border/glow feedback
+* Clicking a selected card again clears the selection
 * Build artifacts such as `.tmp`, `dist`, and webpack reports are ignored by Git
 * Phase 1 Foundation is complete
 * Phase 2 Flip Card UI is complete
-* Phase 3 Power BI Integration is partially complete
+* Phase 3 Power BI Integration is mostly complete
 
 ---
 
 # 🛠️ Tech Stack
 
-| Technology          | Purpose                   |
-| ------------------- | ------------------------- |
-| Power BI Visual SDK | Custom Visual Framework   |
-| TypeScript          | Main Development Language |
-| HTML / DOM          | Visual Structure          |
-| LESS / CSS          | Styling                   |
-| JavaScript Logic    | Interactions              |
-| VS Code             | Development Environment   |
-| GitHub              | Version Control           |
-| Excel               | Sample Data Source        |
-| Power BI Desktop    | Testing Environment       |
+| Technology                    | Purpose                         |
+| ----------------------------- | ------------------------------- |
+| Power BI Visual SDK           | Custom Visual Framework         |
+| TypeScript                    | Main Development Language       |
+| HTML / DOM                    | Visual Structure                |
+| LESS / CSS                    | Styling                         |
+| JavaScript Logic              | Interactions                    |
+| Power BI Selection API        | Cross-visual selection behavior |
+| Power BI Formatting Utilities | Measure formatting support      |
+| VS Code                       | Development Environment         |
+| GitHub                        | Version Control                 |
+| Excel                         | Sample Data Source              |
+| Power BI Desktop              | Testing Environment             |
 
 ---
 
@@ -162,8 +177,11 @@ Current status:
 * [x] Read Category Fields
 * [x] Dynamic Text Rendering
 * [x] Dynamic KPI Rendering
-* [ ] Respect Power BI Measure Formatting
-* [ ] Selection Support
+* [x] Respect Power BI Measure Formatting
+* [x] Selection Support
+* [x] Selected State Visual Feedback
+* [x] Click Again to Clear Selection
+* [ ] Refactor into a `CardData` model before multi-card support
 * [ ] Multi-row / multi-card support
 
 ---
@@ -228,13 +246,59 @@ Detail Value → Detail measure shown on the back face
 ```plaintext
 +----------------------+
 | HGS                  |
-| Average AHT          |
-| 588                  |
+| CSAT %               |
+| 85.8%                |
 | Front value: 12,345  |
 +----------------------+
 ```
 
 The card flips when clicked.
+
+The card can also select the current `Card Label` value in Power BI. Clicking the selected card again clears the selection.
+
+---
+
+# ✅ Recently Completed Milestones
+
+## Measure Formatting Respected
+
+The visual now respects Power BI measure formatting.
+
+Examples:
+
+```plaintext
+CSAT % now displays as 85.8%
+Transfer Rate % displays as a percentage
+Whole-number measures display cleanly
+Decimal values follow Power BI measure formatting
+```
+
+This was completed by using Power BI formatting utilities instead of basic manual number formatting.
+
+---
+
+## Selection Support Added
+
+The visual now supports Power BI selection behavior.
+
+Current behavior:
+
+```plaintext
+Click card once  → selects the current Card Label value
+Click card again → clears the selection
+```
+
+Example:
+
+```plaintext
+Card Label = Vendor
+Visible value = HGS
+
+Clicking the card selects Vendor = HGS.
+Other visuals can react to that selection.
+```
+
+The selected card also shows a visible active border/glow so the selected state is easier to identify.
 
 ---
 
@@ -319,29 +383,25 @@ done   Build completed successfully
 
 # ⚠️ Known Current Limitation
 
-## Measure Formatting Not Yet Respected
+## Single-Card / First Visible Category Only
 
-Current numeric values are displayed using basic number formatting.
+The visual currently supports one card and selects the first visible category value.
 
 Example:
 
 ```plaintext
-CSAT % currently displays as 0.84
+Card Label = Vendor
+First visible value = HGS
 ```
 
-Expected future behavior:
+The card represents and selects that first visible value.
 
-```plaintext
-CSAT % should display as 84%
-```
+Future improvement:
 
-Future fix:
-
-* Read the measure format string from Power BI
-* Use Power BI visual formatting utilities
-* Respect percentage, currency, decimal, and display unit formatting
-
-This is planned as the next improvement before moving deeper into formatting pane customization.
+* Refactor the visual into a `CardData` model
+* Prepare the code for multiple card objects
+* Add multi-row / multi-card support
+* Allow each card to represent its own category value
 
 ---
 
@@ -384,25 +444,24 @@ flipCardVisual/style/visual.less
 5. Continue with the next development target:
 
 ```plaintext
-Respect Power BI measure formatting
+Refactor into a CardData model
 ```
 
 Next target:
 
 ```plaintext
-CSAT % should display as 84%
-Transfer Rate % should display as 15%
-Currency measures should display with currency formatting
-Whole numbers should display cleanly
-Decimal values should follow Power BI measure formatting
+Create a clean CardData interface
+Move Power BI data preparation into a helper method
+Keep the visual behavior the same
+Prepare the code for future multi-card support
 ```
 
 Goal:
 
-* Replace basic manual number formatting
-* Use Power BI measure format strings
-* Keep build successful with zero lint errors
-* Test with Total Calls, Average AHT, CSAT %, QA Score %, and Transfer Rate %
+* Separate data preparation from rendering
+* Make `update()` cleaner and easier to understand
+* Prepare for multi-row / multi-card support
+* Keep measure formatting, card flipping, selection, clear selection, and selected border working
 
 ---
 
@@ -440,14 +499,31 @@ git push
 Current suggested next commit message:
 
 ```bash
-git commit -m "Update README with current flip card progress"
+git commit -m "Add selection support and selected state feedback"
 ```
 
-Future formatting milestone commit message:
+Future refactor milestone commit message:
 
 ```bash
-git commit -m "Respect Power BI measure formatting"
+git commit -m "Refactor visual data into CardData model"
 ```
+
+---
+
+# 🧠 Learning Notes From This Milestone
+
+This milestone introduced several important TypeScript and Power BI custom visual concepts:
+
+* `import` brings code from packages into the file
+* A `class` is a reusable object blueprint with properties and methods
+* `private` means only the class can access that property or method
+* `readonly` means the property reference should not be replaced after setup
+* `constructor` runs once when Power BI creates the visual
+* `this` in TypeScript is similar to `self` in Python
+* `const` creates a variable that should not be reassigned
+* `void` can mean a function returns nothing, or that a returned Promise is intentionally ignored
+* TypeScript can control CSS classes through `classList.add`, `classList.remove`, and `classList.toggle`
+* CSS / LESS controls how visual states such as selected, flipped, and hover should look
 
 ---
 

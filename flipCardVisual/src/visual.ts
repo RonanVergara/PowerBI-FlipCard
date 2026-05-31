@@ -7,12 +7,18 @@ import "./../style/visual.less";
 import DataView = powerbi.DataView;
 import DataViewCategoryColumn = powerbi.DataViewCategoryColumn;
 import DataViewValueColumn = powerbi.DataViewValueColumn;
+import ISelectionId = powerbi.visuals.ISelectionId;
+import ISelectionManager = powerbi.extensibility.ISelectionManager;
 import IVisual = powerbi.extensibility.visual.IVisual;
+import IVisualHost = powerbi.extensibility.visual.IVisualHost;
 import VisualConstructorOptions = powerbi.extensibility.visual.VisualConstructorOptions;
 import VisualUpdateOptions = powerbi.extensibility.visual.VisualUpdateOptions;
 
 export class Visual implements IVisual {
     private readonly target: HTMLElement;
+    private readonly host: IVisualHost;
+    private readonly selectionManager: ISelectionManager;
+
     private readonly cardWrapper: HTMLDivElement;
     private readonly cardInner: HTMLDivElement;
 
@@ -27,9 +33,13 @@ export class Visual implements IVisual {
     private readonly backSubtitle: HTMLDivElement;
 
     private isFlipped: boolean = false;
+    private currentSelectionId: ISelectionId | undefined;
+    private hasActiveSelection: boolean = false;
 
     constructor(options: VisualConstructorOptions) {
         this.target = options.element;
+        this.host = options.host;
+        this.selectionManager = this.host.createSelectionManager();
         this.target.classList.add("flip-card-visual-root");
 
         this.cardWrapper = document.createElement("div");
@@ -69,9 +79,8 @@ export class Visual implements IVisual {
         this.cardWrapper.appendChild(this.cardInner);
         this.target.appendChild(this.cardWrapper);
 
-        this.cardWrapper.addEventListener("click", () => {
-            this.isFlipped = !this.isFlipped;
-            this.cardInner.classList.toggle("is-flipped", this.isFlipped);
+        this.cardWrapper.addEventListener("click", (event: MouseEvent) => {
+            this.onCardClick(event);
         });
     }
 
@@ -82,6 +91,9 @@ export class Visual implements IVisual {
         const dataView = options.dataViews && options.dataViews[0];
 
         if (!dataView || !dataView.categorical) {
+            this.currentSelectionId = undefined;
+            this.hasActiveSelection = false;
+            this.cardWrapper.classList.remove("is-selected");
             this.showEmptyState();
 
             return;
@@ -92,10 +104,15 @@ export class Visual implements IVisual {
         const detailMeasure = this.findMeasureByRole(dataView, "detailValue");
 
         if (!cardMeasure) {
+            this.currentSelectionId = undefined;
+            this.hasActiveSelection = false;
+            this.cardWrapper.classList.remove("is-selected");
             this.showEmptyState();
 
             return;
         }
+        
+        this.currentSelectionId = this.createCategorySelectionId(labelColumn);
 
         const labelText = this.getCategoryLabel(labelColumn);
         const cardMeasureName = cardMeasure.source.displayName || "Card Value";
@@ -124,6 +141,32 @@ export class Visual implements IVisual {
         this.backTitle.textContent = detailMeasureName;
         this.backValue.textContent = formattedDetailMeasureValue;
         this.backSubtitle.textContent = `Front value: ${formattedCardMeasureValue}`;
+    }
+
+    private onCardClick(event: MouseEvent): void {
+        this.isFlipped = !this.isFlipped;
+        this.cardInner.classList.toggle("is-flipped", this.isFlipped);
+        
+        if (!this.currentSelectionId) {
+            return;
+        }
+
+        if (this.hasActiveSelection) {
+            void this.selectionManager.clear().then(() => {
+                this.hasActiveSelection = false;
+                this.cardWrapper.classList.remove("is-selected");
+            });
+            return;
+        }
+        
+        const multiSelect = event.ctrlKey || event.metaKey;
+
+        void this.selectionManager
+            .select(this.currentSelectionId, multiSelect)
+            .then((selectionIds: ISelectionId[]) => {
+                this.hasActiveSelection = selectionIds.length > 0;
+                this.cardWrapper.classList.toggle("is-selected", this.hasActiveSelection);
+            });
     }
 
     private showEmptyState(): void {
@@ -180,6 +223,17 @@ export class Visual implements IVisual {
         }
 
         return undefined;
+    }
+
+    private createCategorySelectionId(categoryColumn: DataViewCategoryColumn | undefined): ISelectionId | undefined {
+        if (!categoryColumn || !categoryColumn.values || categoryColumn.values.length === 0) {
+            return undefined;
+        }
+
+        return this.host
+            .createSelectionIdBuilder()
+            .withCategory(categoryColumn, 0)
+            .createSelectionId();
     }
 
     private getCategoryLabel(categoryColumn: DataViewCategoryColumn | undefined): string {
