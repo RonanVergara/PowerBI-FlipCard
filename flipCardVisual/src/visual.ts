@@ -25,6 +25,21 @@ interface CardData {
     selectionId: ISelectionId | undefined;
 }
 
+interface CardDomElements {
+    wrapper: HTMLDivElement;
+    inner: HTMLDivElement;
+
+    frontLabel: HTMLDivElement;
+    frontTitle: HTMLDivElement;
+    frontValue: HTMLDivElement;
+    frontSubtitle: HTMLDivElement;
+
+    backLabel: HTMLDivElement;
+    backTitle: HTMLDivElement;
+    backValue: HTMLDivElement;
+    backSubtitle: HTMLDivElement;
+}
+
 export class Visual implements IVisual {
     private readonly target: HTMLElement;
     private readonly host: IVisualHost;
@@ -57,41 +72,21 @@ export class Visual implements IVisual {
         this.cardContainer = document.createElement("div");
         this.cardContainer.className = "flip-card-container";
 
-        this.cardWrapper = document.createElement("div");
-        this.cardWrapper.className = "flip-card-wrapper";
+        const cardElements = this.createCardElements();
 
-        this.cardInner = document.createElement("div");
-        this.cardInner.className = "flip-card-inner";
+        this.cardWrapper = cardElements.wrapper;
+        this.cardInner = cardElements.inner;
 
-        const frontFace = document.createElement("div");
-        frontFace.className = "flip-card-face flip-card-front";
+        this.frontLabel = cardElements.frontLabel;
+        this.frontTitle = cardElements.frontTitle;
+        this.frontValue = cardElements.frontValue;
+        this.frontSubtitle = cardElements.frontSubtitle;
 
-        this.frontLabel = this.createTextElement("flip-card-label", "No label");
-        this.frontTitle = this.createTextElement("flip-card-title", "Add a measure");
-        this.frontValue = this.createTextElement("flip-card-value", "No value");
-        this.frontSubtitle = this.createTextElement("flip-card-subtitle", "Drag a measure into Card Value");
+        this.backLabel = cardElements.backLabel;
+        this.backTitle = cardElements.backTitle;
+        this.backValue = cardElements.backValue;
+        this.backSubtitle = cardElements.backSubtitle;
 
-        frontFace.appendChild(this.frontLabel);
-        frontFace.appendChild(this.frontTitle);
-        frontFace.appendChild(this.frontValue);
-        frontFace.appendChild(this.frontSubtitle);
-
-        const backFace = document.createElement("div");
-        backFace.className = "flip-card-face flip-card-back";
-
-        this.backLabel = this.createTextElement("flip-card-label", "No label");
-        this.backTitle = this.createTextElement("flip-card-title", "Details");
-        this.backValue = this.createTextElement("flip-card-value", "No detail");
-        this.backSubtitle = this.createTextElement("flip-card-subtitle", "Drag another measure into Detail Value");
-
-        backFace.appendChild(this.backLabel);
-        backFace.appendChild(this.backTitle);
-        backFace.appendChild(this.backValue);
-        backFace.appendChild(this.backSubtitle);
-
-        this.cardInner.appendChild(frontFace);
-        this.cardInner.appendChild(backFace);
-        this.cardWrapper.appendChild(this.cardInner);
         this.cardContainer.appendChild(this.cardWrapper);
         this.target.appendChild(this.cardContainer);
 
@@ -236,6 +231,57 @@ export class Visual implements IVisual {
         this.backTitle.textContent = "Details";
         this.backValue.textContent = "No detail";
         this.backSubtitle.textContent = "Optional: drag another measure into Detail Value";
+    }
+
+    private createCardElements(): CardDomElements {
+        const wrapper = document.createElement("div");
+        wrapper.className = "flip-card-wrapper";
+
+        const inner = document.createElement("div");
+        inner.className = "flip-card-inner";
+
+        const frontFace = document.createElement("div");
+        frontFace.className = "flip-card-face flip-card-front";
+
+        const frontLabel = this.createTextElement("flip-card-label", "No label");
+        const frontTitle = this.createTextElement("flip-card-title", "Add a measure");
+        const frontValue = this.createTextElement("flip-card-value", "No value");
+        const frontSubtitle = this.createTextElement("flip-card-subtitle", "Drag a measure into Card Value");
+
+        frontFace.appendChild(frontLabel);
+        frontFace.appendChild(frontTitle);
+        frontFace.appendChild(frontValue);
+        frontFace.appendChild(frontSubtitle);
+
+        const backFace = document.createElement("div");
+        backFace.className = "flip-card-face flip-card-back";
+
+        const backLabel = this.createTextElement("flip-card-label", "No label");
+        const backTitle = this.createTextElement("flip-card-title", "Details");
+        const backValue = this.createTextElement("flip-card-value", "No detail");
+        const backSubtitle = this.createTextElement("flip-card-subtitle", "Drag another measure into Detail Value");
+
+        backFace.appendChild(backLabel);
+        backFace.appendChild(backTitle);
+        backFace.appendChild(backValue);
+        backFace.appendChild(backSubtitle);
+
+        inner.appendChild(frontFace);
+        inner.appendChild(backFace);
+        wrapper.appendChild(inner);
+
+        return {
+            wrapper,
+            inner,
+            frontLabel,
+            frontTitle,
+            frontValue,
+            frontSubtitle,
+            backLabel,
+            backTitle,
+            backValue,
+            backSubtitle
+        };
     }
 
     private createTextElement(className: string, text: string): HTMLDivElement {
