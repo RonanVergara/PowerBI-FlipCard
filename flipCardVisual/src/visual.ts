@@ -46,18 +46,7 @@ export class Visual implements IVisual {
     private readonly selectionManager: ISelectionManager;
 
     private readonly cardContainer: HTMLDivElement;
-    private readonly cardWrapper: HTMLDivElement;
-    private readonly cardInner: HTMLDivElement;
-
-    private readonly frontLabel: HTMLDivElement;
-    private readonly frontTitle: HTMLDivElement;
-    private readonly frontValue: HTMLDivElement;
-    private readonly frontSubtitle: HTMLDivElement;
-
-    private readonly backLabel: HTMLDivElement;
-    private readonly backTitle: HTMLDivElement;
-    private readonly backValue: HTMLDivElement;
-    private readonly backSubtitle: HTMLDivElement;
+    private readonly cardElements: CardDomElements;
 
     private isFlipped: boolean = false;
     private currentSelectionId: ISelectionId | undefined;
@@ -72,25 +61,12 @@ export class Visual implements IVisual {
         this.cardContainer = document.createElement("div");
         this.cardContainer.className = "flip-card-container";
 
-        const cardElements = this.createCardElements();
+        this.cardElements = this.createCardElements();
 
-        this.cardWrapper = cardElements.wrapper;
-        this.cardInner = cardElements.inner;
-
-        this.frontLabel = cardElements.frontLabel;
-        this.frontTitle = cardElements.frontTitle;
-        this.frontValue = cardElements.frontValue;
-        this.frontSubtitle = cardElements.frontSubtitle;
-
-        this.backLabel = cardElements.backLabel;
-        this.backTitle = cardElements.backTitle;
-        this.backValue = cardElements.backValue;
-        this.backSubtitle = cardElements.backSubtitle;
-
-        this.cardContainer.appendChild(this.cardWrapper);
+        this.cardContainer.appendChild(this.cardElements.wrapper);
         this.target.appendChild(this.cardContainer);
 
-        this.cardWrapper.addEventListener("click", (event: MouseEvent) => {
+        this.cardElements.wrapper.addEventListener("click", (event: MouseEvent) => {
             this.onCardClick(event);
         });
     }
@@ -105,25 +81,24 @@ export class Visual implements IVisual {
         if (!cardData) {
             this.currentSelectionId = undefined;
             this.clearSelectionState();
-            this.showEmptyState();
+            this.showEmptyState(this.cardElements);
 
             return;
         }
 
         this.currentSelectionId = cardData.selectionId;
-        this.renderCard(cardData);
+        this.renderCard(cardData, this.cardElements);
     }
 
-    private resizeCard(options: VisualUpdateOptions): void {
-        this.cardWrapper.style.width = `${options.viewport.width}px`;
-        this.cardWrapper.style.height = `${options.viewport.height}px`;
-    }
+        private resizeCard(options: VisualUpdateOptions): void {
+            this.cardElements.wrapper.style.width = `${options.viewport.width}px`;
+            this.cardElements.wrapper.style.height = `${options.viewport.height}px`;
+        }
 
-    private clearSelectionState(): void {
-        this.hasActiveSelection = false;
-        this.cardWrapper.classList.remove("is-selected");
-    }
-
+        private clearSelectionState(): void {
+            this.hasActiveSelection = false;
+            this.cardElements.wrapper.classList.remove("is-selected");
+        }
     private getCardDataForRow(dataView: DataView | undefined, rowIndex: number): CardData | undefined {
         if (!dataView || !dataView.categorical) {
             return undefined
@@ -184,21 +159,21 @@ export class Visual implements IVisual {
         return labelColumn.values.length;
     }
 
-    private renderCard(cardData: CardData): void {
-        this.frontLabel.textContent = cardData.label;
-        this.frontTitle.textContent = cardData.frontTitle;
-        this.frontValue.textContent = cardData.frontValue;
-        this.frontSubtitle.textContent = cardData.frontSubtitle;
+    private renderCard(cardData: CardData, cardElements: CardDomElements): void {
+        cardElements.frontLabel.textContent = cardData.label;
+        cardElements.frontTitle.textContent = cardData.frontTitle;
+        cardElements.frontValue.textContent = cardData.frontValue;
+        cardElements.frontSubtitle.textContent = cardData.frontSubtitle;
 
-        this.backLabel.textContent = cardData.label;
-        this.backTitle.textContent = cardData.backTitle;
-        this.backValue.textContent = cardData.backValue;
-        this.backSubtitle.textContent = cardData.backSubtitle;
+        cardElements.backLabel.textContent = cardData.label;
+        cardElements.backTitle.textContent = cardData.backTitle;
+        cardElements.backValue.textContent = cardData.backValue;
+        cardElements.backSubtitle.textContent = cardData.backSubtitle;
     }
 
     private onCardClick(event: MouseEvent): void {
         this.isFlipped = !this.isFlipped;
-        this.cardInner.classList.toggle("is-flipped", this.isFlipped);
+        this.cardElements.inner.classList.toggle("is-flipped", this.isFlipped);
         
         if (!this.currentSelectionId) {
             return;
@@ -217,21 +192,21 @@ export class Visual implements IVisual {
             .select(this.currentSelectionId, multiSelect)
             .then((selectionIds: ISelectionId[]) => {
                 this.hasActiveSelection = selectionIds.length > 0;
-                this.cardWrapper.classList.toggle("is-selected", this.hasActiveSelection);
+                this.cardElements.wrapper.classList.toggle("is-selected", this.hasActiveSelection);
             });
     }
 
-    private showEmptyState(): void {
-        this.frontLabel.textContent = "No label";
-        this.frontTitle.textContent = "Add a measure";
-        this.frontValue.textContent = "No value";
-        this.frontSubtitle.textContent = "Drag a measure into Card Value";
+        private showEmptyState(cardElements: CardDomElements): void {
+            cardElements.frontLabel.textContent = "No label";
+            cardElements.frontTitle.textContent = "Add a measure";
+            cardElements.frontValue.textContent = "No value";
+            cardElements.frontSubtitle.textContent = "Drag a measure into Card Value";
 
-        this.backLabel.textContent = "No label";
-        this.backTitle.textContent = "Details";
-        this.backValue.textContent = "No detail";
-        this.backSubtitle.textContent = "Optional: drag another measure into Detail Value";
-    }
+            cardElements.backLabel.textContent = "No label";
+            cardElements.backTitle.textContent = "Details";
+            cardElements.backValue.textContent = "No detail";
+            cardElements.backSubtitle.textContent = "Optional: drag another measure into Detail Value";
+        }
 
     private createCardElements(): CardDomElements {
         const wrapper = document.createElement("div");
