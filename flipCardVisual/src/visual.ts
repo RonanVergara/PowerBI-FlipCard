@@ -67,7 +67,7 @@ export class Visual implements IVisual {
         this.target.appendChild(this.cardContainer);
 
         this.cardElements.wrapper.addEventListener("click", (event: MouseEvent) => {
-            this.onCardClick(event);
+            this.onCardClick(event, this.cardElements);
         });
     }
 
@@ -171,9 +171,9 @@ export class Visual implements IVisual {
         cardElements.backSubtitle.textContent = cardData.backSubtitle;
     }
 
-    private onCardClick(event: MouseEvent): void {
+    private onCardClick(event: MouseEvent, cardElements: CardDomElements): void {
         this.isFlipped = !this.isFlipped;
-        this.cardElements.inner.classList.toggle("is-flipped", this.isFlipped);
+        cardElements.inner.classList.toggle("is-flipped", this.isFlipped);
         
         if (!this.currentSelectionId) {
             return;
@@ -192,7 +192,7 @@ export class Visual implements IVisual {
             .select(this.currentSelectionId, multiSelect)
             .then((selectionIds: ISelectionId[]) => {
                 this.hasActiveSelection = selectionIds.length > 0;
-                this.cardElements.wrapper.classList.toggle("is-selected", this.hasActiveSelection);
+                cardElements.wrapper.classList.toggle("is-selected", this.hasActiveSelection);
             });
     }
 
