@@ -67,7 +67,7 @@ export class Visual implements IVisual {
         this.target.appendChild(this.cardContainer);
 
         this.cardElements.wrapper.addEventListener("click", (event: MouseEvent) => {
-            this.onCardClick(event, this.cardElements);
+            this.onCardClick(event, this.cardElements, this.currentSelectionId);
         });
     }
 
@@ -171,14 +171,17 @@ export class Visual implements IVisual {
         cardElements.backSubtitle.textContent = cardData.backSubtitle;
     }
 
-    private onCardClick(event: MouseEvent, cardElements: CardDomElements): void {
+    private onCardClick(
+        event: MouseEvent,
+        cardElements: CardDomElements,
+        selectionId: ISelectionId | undefined
+    ): void {
         this.isFlipped = !this.isFlipped;
         cardElements.inner.classList.toggle("is-flipped", this.isFlipped);
-        
-        if (!this.currentSelectionId) {
+
+        if (!selectionId) {
             return;
         }
-
         if (this.hasActiveSelection) {
             void this.selectionManager.clear().then(() => {
                 this.clearSelectionState();
@@ -189,7 +192,7 @@ export class Visual implements IVisual {
         const multiSelect = event.ctrlKey || event.metaKey;
 
         void this.selectionManager
-            .select(this.currentSelectionId, multiSelect)
+            .select(selectionId, multiSelect)
             .then((selectionIds: ISelectionId[]) => {
                 this.hasActiveSelection = selectionIds.length > 0;
                 cardElements.wrapper.classList.toggle("is-selected", this.hasActiveSelection);
