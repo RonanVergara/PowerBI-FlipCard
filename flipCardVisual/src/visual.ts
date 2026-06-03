@@ -40,6 +40,11 @@ interface CardDomElements {
     backSubtitle: HTMLDivElement;
 }
 
+interface CardInstance {
+    data: CardData;
+    elements: CardDomElements;
+}
+
 export class Visual implements IVisual {
     private readonly target: HTMLElement;
     private readonly host: IVisualHost;
@@ -78,7 +83,14 @@ export class Visual implements IVisual {
         const rowCount = this.getCategoryRowCount(dataView);
         const cardData = rowCount > 0 ? this.getCardDataForRow(dataView, 0) : undefined;
 
-        if (!cardData) {
+        const cardInstance: CardInstance | undefined = cardData
+            ? {
+                data: cardData,
+                elements: this.cardElements
+            }
+            : undefined;
+        
+        if(!cardInstance) {
             this.currentSelectionId = undefined;
             this.clearSelectionState();
             this.showEmptyState(this.cardElements);
@@ -86,8 +98,8 @@ export class Visual implements IVisual {
             return;
         }
 
-        this.currentSelectionId = cardData.selectionId;
-        this.renderCard(cardData, this.cardElements);
+        this.currentSelectionId = cardInstance.data.selectionId;
+        this.renderCard(cardInstance.data, cardInstance.elements);
     }
 
         private resizeCard(options: VisualUpdateOptions): void {
