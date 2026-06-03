@@ -6,37 +6,35 @@ This project is a custom Power BI visual that creates an interactive flip card.
 
 The visual behaves more like a modern web UI component than a traditional static Power BI card.
 
-The long-term goal is to build a reusable Power BI custom visual with:
+The long-term goal is to build a reusable, highly customizable Power BI visual with:
 
 * Click-to-flip animation
 * Front and back card content
 * Dynamic Power BI measure values
 * Power BI measure formatting support
 * Power BI category selection behavior
-* Formatting pane customization
 * Multi-card support
+* Formatting pane customization
 * Modern dashboard-style UI/UX
 
 ---
 
 ## 🧠 Learning-First Project Rule
 
-This is not only a development project.
+This is both a development project and a learning project.
 
-This is also a learning project.
-
-The main goal is for the developer to understand and master the code through repeated small updates.
+The main goal is to understand and master the code through small, tested updates.
 
 When helping with this project:
 
-* Do not rush to provide full-file replacements unless requested.
-* Prefer step-by-step edits.
+* Do not rush.
+* Do not provide full-file replacements unless requested.
+* Prefer small step-by-step edits.
 * Show exactly where to edit.
-* Explain what each code block does.
+* Explain what each change does.
 * Explain why the change matters.
-* Keep each step small.
-* After each milestone, test before moving forward.
-* Prioritize learning and repetition over speed.
+* Test after every milestone.
+* Keep the visual stable after every step.
 
 Preferred teaching format:
 
@@ -44,19 +42,18 @@ Preferred teaching format:
 Step number
 What we are changing
 Where to find it
-What to add / replace
+What exact small part to add or replace
 Why it works
-What to test
+What to test before moving on
 ```
 
 Important working style:
 
-* Related safe changes may be grouped together.
-* CSS-only layout changes can be grouped when they belong to the same purpose.
-* Small helper-only changes can be grouped when they are directly related.
+* Related safe helper-only changes may be grouped together.
+* CSS-only layout changes may be grouped when they support the same purpose.
 * Avoid combining unrelated changes in one step.
 * Do not combine DOM creation, selection behavior, multi-card rendering, and styling all at once.
-* Keep the visual stable after every step.
+* Prioritize learning and stability over speed.
 
 ---
 
@@ -69,49 +66,51 @@ Create a reusable Power BI custom visual where:
 * The back face shows a detail KPI
 * Category labels such as Vendor, Team, Agent, or Call Driver can be shown
 * Power BI measure formatting is respected
-* Clicking the card selects the current category value
+* Clicking a card selects the related Power BI category value
 * Clicking the selected card again clears the selection
 * Selected state has visible border/glow feedback
-* The visual can later support multiple cards and formatting pane options
+* Multiple cards can eventually be rendered from category rows
+* Users can later customize the visual through the Power BI formatting pane
 
 ---
 
-## ✅ Current Working Features
+## ✅ Current Status
 
-The visual currently supports:
+The visual is currently a stable **single-card visual**.
 
-* Static flip card layout
-* Front card face
-* Back card face
-* Smooth flip animation
-* Dynamic Power BI field values
-* `Card Label` category field
-* `Card Value` measure field
-* `Detail Value` measure field
-* Power BI measure formatting
-* Percentage formatting such as `85.8%` instead of `0.858`
-* Power BI selection support
-* Click again to clear selection
-* Selected border/glow feedback
-* Single-card row-based data preparation
-* Row-index-aware label, value, and selection logic
-* Card container wrapper
-* Flex-ready card container layout
-* Reusable card DOM creation helper
-* Grouped single-card DOM elements through `CardDomElements`
-* `renderCard()` now renders into a passed card DOM object
-* `showEmptyState()` now renders into a passed card DOM object
-* `onCardClick()` now receives the clicked card DOM object
-* `onCardClick()` now receives the card selection ID as an argument
-* Successful `.pbiviz` package build
-* Successful Power BI Desktop testing
+It is being carefully prepared for future multi-card support, but it does **not** render multiple cards yet.
+
+Current tested status:
+
+```plaintext
+Single-card visual works.
+Card resizes correctly.
+Card flips correctly.
+Power BI filtering works when clicked.
+Click again clears the selection.
+Selected border/glow feedback works.
+Values and percentage formatting work.
+Empty state works.
+```
+
+Current development stage:
+
+```plaintext
+Phase 4 — Multi-card preparation
+```
+
+Current focus:
+
+```plaintext
+Prepare the code structure for multi-card rendering while keeping the visual stable as a single-card visual.
+```
 
 ---
 
 ## 🧩 Current Field Wells
 
 ```plaintext
-Card Label   → Category shown on the card, such as Vendor or Agent
+Card Label   → Category shown on the card, such as Vendor, Agent, Team, or Call Driver
 Card Value   → Main measure shown on the front face
 Detail Value → Detail measure shown on the back face
 ```
@@ -144,7 +143,7 @@ Front value: 16.63K
 
 ---
 
-## 🏁 Completed Milestones
+## 🏁 Completed Milestones Summary
 
 ### Phase 1 — Foundation
 
@@ -159,12 +158,10 @@ Front value: 16.63K
 
 ### Phase 2 — Flip Card UI
 
-* [x] Created card wrapper
-* [x] Created front face
-* [x] Created back face
+* [x] Created front and back card faces
 * [x] Added LESS/CSS styling
 * [x] Added click interaction
-* [x] Added flip animation
+* [x] Added smooth flip animation
 * [x] Tested flip behavior in Power BI Desktop
 
 ### Phase 3 — Power BI Data Integration
@@ -172,17 +169,16 @@ Front value: 16.63K
 * [x] Added `Card Label`
 * [x] Added `Card Value`
 * [x] Added `Detail Value`
-* [x] Read dynamic Power BI measure values
 * [x] Read dynamic Power BI category labels
-* [x] Display front measure dynamically
-* [x] Display back measure dynamically
+* [x] Read dynamic Power BI measure values
+* [x] Display front and back values dynamically
 * [x] Respect Power BI measure formatting
-* [x] Support percentage formatting
+* [x] Support percentage formatting such as `85.8%` instead of `0.858`
 * [x] Add Power BI selection behavior
 * [x] Add click-again-to-clear behavior
 * [x] Add selected card border/glow feedback
 
-### Phase 3.5 — Single-Card Code Refactor
+### Phase 3.5 — Single-Card Refactor
 
 * [x] Added `CardData` interface
 * [x] Added `getCardDataForRow()` helper
@@ -193,38 +189,32 @@ Front value: 16.63K
 * [x] Moved row-based logic into helper functions
 * [x] Tested after each refactor and confirmed the visual still works
 
-### Phase 4 — Multi-Card Preparation Started
+### Phase 4 — Multi-Card Preparation
 
 * [x] Introduced `rowIndex` concept
-* [x] Updated category label logic to use `rowIndex`
-* [x] Updated measure value logic to use `rowIndex`
-* [x] Updated selection ID logic to use `rowIndex`
-* [x] Renamed `getCardData()` to `getCardDataForRow()`
+* [x] Updated category label, value, and selection ID logic to use `rowIndex`
 * [x] Added `getCategoryRowCount()` helper
-* [x] Added row count guard before rendering
 * [x] Added `cardContainer` wrapper
-* [x] Added `.flip-card-container` styling
-* [x] Prepared container layout with flex, wrap, gap, and hidden overflow
-* [x] Fixed temporary scrollbar flash during flip animation by using `overflow: hidden`
+* [x] Added flex-ready `.flip-card-container` styling
 * [x] Added `CardDomElements` interface
 * [x] Added `createCardElements()` helper
 * [x] Moved card DOM creation out of the constructor
 * [x] Grouped single-card DOM references into `this.cardElements`
-* [x] Updated `renderCard()` to accept `CardDomElements`
-* [x] Updated `showEmptyState()` to accept `CardDomElements`
-* [x] Updated `onCardClick()` to accept `CardDomElements`
-* [x] Updated `onCardClick()` to accept `selectionId`
-* [x] Confirmed card still resizes correctly
-* [x] Confirmed card still flips correctly
-* [x] Confirmed Power BI filtering still works when clicked
-* [x] Confirmed click-again-to-clear behavior still works
-* [x] Tested after each small change in Power BI Desktop
+* [x] Added `CardInstance` interface
+* [x] Added `createCardInstance()` helper
+* [x] Added `createCardInstanceForRow()` helper
+* [x] Added `createCardInstances()` helper
+* [x] Replaced `currentCardInstance` with `cardInstances: CardInstance[]`
+* [x] Updated `renderCard()` to accept a full `CardInstance`
+* [x] Updated `onCardClick()` to accept a full `CardInstance`
+* [x] Removed duplicate `currentSelectionId` state
+* [x] Confirmed resize, flip, filtering, clear-selection, selected glow, formatting, and empty state still work
 
 ---
 
 ## 🧠 Current Code Pattern
 
-The current `visual.ts` structure is being refactored toward cleaner responsibilities and future multi-card support.
+The current `visual.ts` structure is being prepared for multi-card rendering.
 
 Current mental model:
 
@@ -237,11 +227,13 @@ resizeCard() sizes the visual
 ↓
 getCategoryRowCount() checks available category rows
 ↓
-getCardDataForRow(dataView, 0) prepares one CardData object for row 0
+createCardInstances(dataView, rowCount) creates the card instance list
 ↓
-renderCard(cardData, this.cardElements) displays the card
+cardInstances currently contains only row 0
 ↓
-onCardClick(event, this.cardElements, this.currentSelectionId) handles flip and Power BI selection
+renderCard(cardInstances[0]) displays the single card
+↓
+onCardClick(event, cardInstances[0]) handles flip and Power BI selection
 ```
 
 Important learning concept:
@@ -253,25 +245,28 @@ One function should have one main job.
 Current helper roles:
 
 ```plaintext
-resizeCard()                = sizes the card area from Power BI viewport
-clearSelectionState()       = removes selected visual state
-getCategoryRowCount()       = counts how many category rows Power BI provided
-getCardDataForRow()         = prepares card information for one row index
-getCategoryLabel()          = gets the category label for one row index
-getValueAtRow()             = gets a measure value for one row index
-createCategorySelectionId() = creates Power BI selection ID for one row index
-createCardElements()        = builds the DOM structure for one flip card
-createTextElement()         = creates a reusable text div
-renderCard()                = puts CardData into a specific CardDomElements object
-showEmptyState()            = puts empty-state text into a specific CardDomElements object
-onCardClick()               = handles flip and selection for a passed card DOM object and selection ID
+resizeCard()                 = sizes the card area from Power BI viewport
+clearSelectionState()        = removes selected visual state
+getCategoryRowCount()        = counts how many category rows Power BI provided
+getCardDataForRow()          = prepares card information for one row index
+getCategoryLabel()           = gets the category label for one row index
+getValueAtRow()              = gets a measure value for one row index
+createCategorySelectionId()  = creates Power BI selection ID for one row index
+createCardElements()         = builds the DOM structure for one flip card
+createTextElement()          = creates a reusable text div
+createCardInstance()         = groups CardData + CardDomElements
+createCardInstanceForRow()   = creates one CardInstance for one row
+createCardInstances()        = creates the list of CardInstances
+renderCard()                 = renders one CardInstance
+showEmptyState()             = renders empty-state text into card elements
+onCardClick()                = handles flip and selection for one CardInstance
 ```
 
 ---
 
 ## 🧱 Current DOM Structure
 
-The visual currently uses a card container wrapper.
+The visual currently renders one card inside a container.
 
 Current structure:
 
@@ -284,9 +279,7 @@ target
             └── flip-card-back
 ```
 
-This prepares the visual for future multi-card rendering.
-
-Future structure:
+Future multi-card structure:
 
 ```plaintext
 target
@@ -298,7 +291,7 @@ target
     └── flip-card-wrapper
 ```
 
-The number of cards should eventually depend on how many category rows Power BI provides.
+The number of cards should eventually depend on category rows from Power BI.
 
 Example:
 
@@ -312,13 +305,11 @@ rowIndex 4 → Vendor D
 
 ---
 
-## 🧱 Current TypeScript Structure
-
-The visual now has two important object shapes.
+## 🧱 Current TypeScript Shapes
 
 ### `CardData`
 
-`CardData` represents the information shown on the card.
+Represents the information shown on the card.
 
 ```plaintext
 CardData
@@ -334,7 +325,7 @@ CardData
 
 ### `CardDomElements`
 
-`CardDomElements` represents the HTML elements that make up one card.
+Represents the HTML elements that make up one card.
 
 ```plaintext
 CardDomElements
@@ -350,31 +341,44 @@ CardDomElements
 └── backSubtitle
 ```
 
-Current single-card object:
+### `CardInstance`
+
+Groups one card’s data and DOM elements together.
 
 ```plaintext
-this.cardElements
+CardInstance
+├── data
+│   └── CardData
+└── elements
+    └── CardDomElements
 ```
 
-Future multi-card direction:
+Current storage:
 
 ```plaintext
-card 1 → CardData + CardDomElements
-card 2 → CardData + CardDomElements
-card 3 → CardData + CardDomElements
+this.cardInstances: CardInstance[]
 ```
 
-The next planned helper shape is:
+Current behavior:
 
 ```plaintext
-CardInstance = CardData + CardDomElements
+this.cardInstances[0] = the only rendered card
+```
+
+Future behavior:
+
+```plaintext
+this.cardInstances[0] = row 0 card
+this.cardInstances[1] = row 1 card
+this.cardInstances[2] = row 2 card
+this.cardInstances[3] = row 3 card
 ```
 
 ---
 
 ## 🎨 Current Layout CSS Direction
 
-The card container is now prepared for multiple cards.
+The card container is prepared for multiple cards.
 
 Current container layout:
 
@@ -403,9 +407,9 @@ Scrolling behavior for many cards should be designed intentionally later.
 
 ## ⚠️ Current Limitation
 
-The visual currently still renders only one card.
+The visual still renders only one card.
 
-It now uses row-based data helpers and reusable DOM helpers, but `update()` still calls only row `0`.
+The code is now array-ready, but `createCardInstances()` currently creates only row `0`.
 
 Current behavior:
 
@@ -419,19 +423,24 @@ The card represents HGS
 Current single-card render flow:
 
 ```plaintext
-getCardDataForRow(dataView, 0)
-renderCard(cardData, this.cardElements)
-onCardClick(event, this.cardElements, this.currentSelectionId)
+createCardInstances(dataView, rowCount)
+↓
+createCardInstanceForRow(dataView, 0, this.cardElements)
+↓
+return [cardInstance]
+↓
+renderCard(this.cardInstances[0])
 ```
 
 Future improvement:
 
-* Group card data and card DOM elements together
-* Loop through category rows
-* Call `getCardDataForRow(dataView, rowIndex)` for each row
-* Create one card DOM object per category value
-* Give each card its own selection ID
-* Render all cards inside `.flip-card-container`
+* Loop through all category rows
+* Create one `CardData` object per row
+* Create one `CardDomElements` object per row
+* Group each pair into one `CardInstance`
+* Attach click handling per card
+* Append each card wrapper into `.flip-card-container`
+* Render all cards instead of only `cardInstances[0]`
 
 ---
 
@@ -440,46 +449,16 @@ Future improvement:
 ### Current Focus
 
 ```plaintext
-Prepare the visual for multi-card rendering while keeping the current single-card behavior stable.
+Prepare for multi-card support while keeping the single-card visual stable.
 ```
 
-Completed cleanup targets:
+### Next Small Steps
 
-* [x] Add `resizeCard()` helper
-* [x] Add `clearSelectionState()` helper
-* [x] Keep `update()` cleaner
-* [x] Test after each small refactor
-* [x] Commit clean working milestones
+Before the first real multi-card rendering attempt:
 
-Current multi-card preparation status:
-
-* [x] Make data helpers row-index aware
-* [x] Add row count helper
-* [x] Add card container wrapper
-* [x] Add card container layout CSS
-* [x] Keep single-card behavior working
-* [x] Create reusable card DOM helper
-* [x] Convert one fixed card DOM structure into reusable card creation
-* [x] Group single-card DOM references into `CardDomElements`
-* [x] Make `renderCard()` accept a card DOM object
-* [x] Make `showEmptyState()` accept a card DOM object
-* [x] Make `onCardClick()` accept a card DOM object
-* [x] Make `onCardClick()` accept a selection ID
-* [x] Confirm flip, resize, filtering, and clear-selection still work
-
-Next small target:
-
-```plaintext
-Create a CardInstance interface that groups CardData + CardDomElements.
-```
-
-Important:
-
-```plaintext
-Do not jump directly into full multi-card rendering yet.
-First group the data and DOM for one card into a reusable CardInstance shape.
-The visual should still render only one card after the next step.
-```
+* [ ] Clean up indentation/formatting in `visual.ts`
+* [ ] Create a helper for attaching click behavior to a card
+* [ ] Prepare helper logic for clearing/rebuilding card DOM inside the container
 
 ### Next Major Feature
 
@@ -487,20 +466,18 @@ The visual should still render only one card after the next step.
 Multi-card support
 ```
 
-Planned future work:
+Planned multi-card work:
 
-* [x] Create reusable card DOM helper
-* [x] Convert one fixed card into repeatable card creation
-* [x] Pass card DOM elements into render and click helpers
-* [x] Pass card selection ID into click helper
-* [ ] Create `CardInstance` interface
-* [ ] Create one single-card instance from `CardData` + `CardDomElements`
-* [ ] Convert one `CardData` object into multiple `CardData` objects
-* [ ] Loop through category rows
-* [ ] Create one card per category value
-* [ ] Give each card its own selection ID
-* [ ] Add responsive layout behavior for multiple cards
-* [ ] Test selection behavior per card
+* [ ] Update `createCardInstances()` to loop through category rows
+* [ ] Create one card DOM structure per category row
+* [ ] Create one `CardInstance` per row
+* [ ] Append each card wrapper into `.flip-card-container`
+* [ ] Render each card instance
+* [ ] Test flip behavior per card
+* [ ] Test Power BI selection per card
+* [ ] Test click-again-to-clear behavior per card
+* [ ] Add responsive sizing behavior for multiple cards
+* [ ] Decide scrolling behavior for many cards
 
 ### Later Features
 
@@ -579,9 +556,11 @@ After each change, test:
 ```plaintext
 Card still fills the visual area.
 Card still flips.
-Selection still works.
+Power BI selection still works.
 Click again still clears selection.
+Selected border/glow feedback still works.
 Values and percentage formatting still work.
+Empty state still works.
 Resize the visual smaller and bigger.
 ```
 
@@ -603,6 +582,7 @@ Selected border/glow feedback works.
 Front value still works.
 Back value still works.
 Percentage formatting still works.
+Empty state works.
 ```
 
 ---
@@ -621,16 +601,18 @@ git push
 git status
 ```
 
-Current suggested commit message:
+Expected clean result:
 
-```bash
-git commit -m "Update README with card DOM refactor progress"
+```plaintext
+nothing to commit, working tree clean
 ```
 
-Suggested commit message for the latest code progress:
+Suggested commit message for this README update:
 
 ```bash
-git commit -m "Prepare card DOM and click handlers for multi-card support"
+git add README.md
+git commit -m "Update README for card instance array progress"
+git push
 ```
 
 ---
@@ -654,31 +636,40 @@ Continue learning-first preparation for multi-card support.
 
 Current status:
 Single-card visual still works.
-Row-based data helpers are ready.
-Card container wrapper exists.
-Container layout is flex-ready.
-Reusable card DOM helper exists.
-Single-card DOM elements are grouped as this.cardElements.
-renderCard() accepts CardData + CardDomElements.
-showEmptyState() accepts CardDomElements.
-onCardClick() accepts MouseEvent + CardDomElements + selectionId.
-Flip, resize, filtering, and click-again-to-clear are tested and working.
+Card resizes correctly.
+Card flips correctly.
+Power BI filtering works when clicked.
+Click again clears the selection.
+Selected border/glow feedback works.
+Values and percentage formatting work.
+Empty state works.
 
-Latest tested CSS uses:
-display: flex;
-flex-wrap: wrap;
-gap: 12px;
-overflow: hidden;
+Latest completed refactors:
+Added CardInstance interface.
+Added createCardInstance() helper.
+Added createCardInstanceForRow() helper.
+Added createCardInstances() helper.
+Changed currentCardInstance into cardInstances array.
+Removed duplicate currentSelectionId state.
+Updated renderCard() to accept CardInstance.
+Updated onCardClick() to accept CardInstance.
+update() now creates cardInstances through createCardInstances().
+The visual still renders only cardInstances[0].
 
-Next small step:
-Create a CardInstance interface that groups CardData + CardDomElements.
+Latest known direction:
+Before the first major multi-card rendering step, do small preparation:
+1. Clean up indentation/formatting in visual.ts.
+2. Create a helper for attaching click behavior to a card.
+3. Prepare helper logic for clearing/rebuilding card DOM inside the container.
+
+Important:
+Do not jump directly into full multi-card rendering without testing each bridge step.
+The visual should remain stable as a single-card visual until the first controlled multi-card attempt.
 ```
-
-Do not jump directly to full multi-card rendering yet.
 
 Before moving forward, confirm:
 
-```plaintext
+```bash
 git status
 ```
 
@@ -726,23 +717,29 @@ Power BI filtering works when clicked.
 Click again clears the selection.
 Selected border/glow feedback works.
 Values and percentage formatting work.
+Empty state works.
 
 Latest completed refactors:
-Added CardDomElements interface.
-Added createCardElements() helper.
-Moved card DOM creation out of the constructor.
-Grouped the single-card DOM elements into this.cardElements.
-Updated renderCard() to accept CardData + CardDomElements.
-Updated showEmptyState() to accept CardDomElements.
-Updated onCardClick() to accept MouseEvent + CardDomElements + selectionId.
-Fixed and confirmed the flip logic still works inside onCardClick().
+Added CardInstance interface.
+Added createCardInstance() helper.
+Added createCardInstanceForRow() helper.
+Added createCardInstances() helper.
+Changed currentCardInstance into cardInstances array.
+Removed duplicate currentSelectionId state.
+Updated renderCard() to accept CardInstance.
+Updated onCardClick() to accept CardInstance.
+update() now creates cardInstances through createCardInstances().
+The visual still renders only cardInstances[0].
 
 Latest known direction:
-Next small step is to create a CardInstance interface that groups CardData + CardDomElements.
+Before the first major multi-card rendering step, do small preparation:
+1. Clean up indentation/formatting in visual.ts.
+2. Create a helper for attaching click behavior to a card.
+3. Prepare helper logic for clearing/rebuilding card DOM inside the container.
 
 Important:
 Do not jump directly into full multi-card rendering yet.
-The next step should still keep the visual stable as a single-card visual.
+The next steps should still keep the visual stable as a single-card visual.
 You may group related safe helper-only changes together, but do not combine unrelated changes like multi-card loops, selection-state redesign, and layout changes in one big step.
 ```
 
