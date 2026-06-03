@@ -81,21 +81,16 @@ export class Visual implements IVisual {
 
         const dataView = options.dataViews && options.dataViews[0];
         const rowCount = this.getCategoryRowCount(dataView);
-        const cardData = rowCount > 0 ? this.getCardDataForRow(dataView, 0) : undefined;
 
-        const cardInstance = cardData
-            ? this.createCardInstance(cardData, this.cardElements)
-            : undefined;
-        
-        if (!cardInstance) {
-            this.cardInstances  = [];
+        this.cardInstances = this.createCardInstances(dataView, rowCount);
+
+        if (this.cardInstances.length === 0) {
             this.clearSelectionState();
             this.showEmptyState(this.cardElements);
 
             return;
         }
 
-        this.cardInstances = [cardInstance];
         this.renderCard(this.cardInstances[0]);
     }
 
@@ -157,7 +152,6 @@ export class Visual implements IVisual {
         };
     }
 
-    
     private getCategoryRowCount(dataView: DataView | undefined): number {
         const labelColumn = dataView ? this.findCategoryByRole(dataView, "cardLabel") : undefined;
 
@@ -166,6 +160,37 @@ export class Visual implements IVisual {
         }
 
         return labelColumn.values.length;
+    }
+
+    private createCardInstances(
+        dataView: DataView | undefined,
+        rowCount: number
+    ): CardInstance[] {
+        if (rowCount <= 0) {
+            return [];
+        }
+
+        const cardInstance = this.createCardInstanceForRow(dataView, 0, this.cardElements);
+
+        if (!cardInstance) {
+            return [];
+        }
+
+        return [cardInstance];
+    }
+
+    private createCardInstanceForRow(
+        dataView: DataView | undefined,
+        rowIndex: number,
+        cardElements: CardDomElements
+    ): CardInstance | undefined {
+        const cardData = this.getCardDataForRow(dataView, rowIndex);
+
+        if (!cardData) {
+            return undefined;
+        }
+
+        return this.createCardInstance(cardData, cardElements);
     }
 
     private createCardInstance(
