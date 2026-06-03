@@ -53,9 +53,8 @@ export class Visual implements IVisual {
     private readonly cardContainer: HTMLDivElement;
     private readonly cardElements: CardDomElements;
 
-    private currentCardInstance: CardInstance | undefined;
+    private cardInstances: CardInstance[] = [];
     private isFlipped: boolean = false;
-    private currentSelectionId: ISelectionId | undefined;
     private hasActiveSelection: boolean = false;
 
     constructor(options: VisualConstructorOptions) {
@@ -73,7 +72,7 @@ export class Visual implements IVisual {
         this.target.appendChild(this.cardContainer);
 
         this.cardElements.wrapper.addEventListener("click", (event: MouseEvent) => {
-            this.onCardClick(event, this.currentCardInstance);
+            this.onCardClick(event, this.cardInstances[0]);
         });
     }
 
@@ -89,17 +88,15 @@ export class Visual implements IVisual {
             : undefined;
         
         if (!cardInstance) {
-            this.currentCardInstance = undefined;
-            this.currentSelectionId = undefined;
+            this.cardInstances  = [];
             this.clearSelectionState();
             this.showEmptyState(this.cardElements);
 
             return;
         }
 
-        this.currentCardInstance = cardInstance;
-        this.currentSelectionId = this.currentCardInstance.data.selectionId;
-        this.renderCard(this.currentCardInstance);
+        this.cardInstances = [cardInstance];
+        this.renderCard(this.cardInstances[0]);
     }
 
         private resizeCard(options: VisualUpdateOptions): void {
