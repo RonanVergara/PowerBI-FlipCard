@@ -53,6 +53,7 @@ export class Visual implements IVisual {
     private readonly cardContainer: HTMLDivElement;
     private readonly cardElements: CardDomElements;
 
+    private currentCardInstance: CardInstance | undefined;
     private isFlipped: boolean = false;
     private currentSelectionId: ISelectionId | undefined;
     private hasActiveSelection: boolean = false;
@@ -72,7 +73,7 @@ export class Visual implements IVisual {
         this.target.appendChild(this.cardContainer);
 
         this.cardElements.wrapper.addEventListener("click", (event: MouseEvent) => {
-            this.onCardClick(event, this.cardElements, this.currentSelectionId);
+            this.onCardClick(event, this.currentCardInstance);
         });
     }
 
@@ -87,7 +88,8 @@ export class Visual implements IVisual {
             ? this.createCardInstance(cardData, this.cardElements)
             : undefined;
         
-        if(!cardInstance) {
+        if (!cardInstance) {
+            this.currentCardInstance = undefined;
             this.currentSelectionId = undefined;
             this.clearSelectionState();
             this.showEmptyState(this.cardElements);
@@ -95,8 +97,9 @@ export class Visual implements IVisual {
             return;
         }
 
-        this.currentSelectionId = cardInstance.data.selectionId;
-        this.renderCard(cardInstance);
+        this.currentCardInstance = cardInstance;
+        this.currentSelectionId = this.currentCardInstance.data.selectionId;
+        this.renderCard(this.currentCardInstance);
     }
 
         private resizeCard(options: VisualUpdateOptions): void {
@@ -193,33 +196,42 @@ export class Visual implements IVisual {
         cardElements.backSubtitle.textContent = cardData.backSubtitle;
     }
 
-    private onCardClick(
-        event: MouseEvent,
-        cardElements: CardDomElements,
-        selectionId: ISelectionId | undefined
-    ): void {
-        this.isFlipped = !this.isFlipped;
-        cardElements.inner.classList.toggle("is-flipped", this.isFlipped);
+        private onCardClick(
+            event: MouseEvent,
+            cardInstance: CardInstance | undefined
+        ): void {
+            const cardElements = cardInstance
+                ? cardInstance.elements
+                : this.cardElements;
 
-        if (!selectionId) {
-            return;
-        }
-        if (this.hasActiveSelection) {
-            void this.selectionManager.clear().then(() => {
-                this.clearSelectionState();
-            });
-            return;
-        }
-        
-        const multiSelect = event.ctrlKey || event.metaKey;
+            const selectionId = cardInstance
+                ? cardInstance.data.selectionId
+                : undefined;
 
-        void this.selectionManager
-            .select(selectionId, multiSelect)
-            .then((selectionIds: ISelectionId[]) => {
-                this.hasActiveSelection = selectionIds.length > 0;
-                cardElements.wrapper.classList.toggle("is-selected", this.hasActiveSelection);
-            });
-    }
+            this.isFlipped = !this.isFlipped;
+            cardElements.inner.classList.toggle("is-flipped", this.isFlipped);
+
+            if (!selectionId) {
+                return;
+            }
+
+            if (this.hasActiveSelection) {
+                void this.selectionManager.clear().then(() => {
+                    this.clearSelectionState();
+                });
+
+                return;
+            }
+
+            const multiSelect = event.ctrlKey || event.metaKey;
+
+            void this.selectionManager
+                .select(selectionId, multiSelect)
+                .then((selectionIds: ISelectionId[]) => {
+                    this.hasActiveSelection = selectionIds.length > 0;
+                    cardElements.wrapper.classList.toggle("is-selected", this.hasActiveSelection);
+                });
+        }
 
         private showEmptyState(cardElements: CardDomElements): void {
             cardElements.frontLabel.textContent = "No label";
