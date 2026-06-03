@@ -2,12 +2,13 @@
 
 ## 📌 Project Overview
 
-This project is a custom Power BI visual that creates an interactive flip card.
+This project is a custom Power BI visual that creates an interactive smart KPI card.
 
 The visual behaves more like a modern web UI component than a traditional static Power BI card.
 
 The long-term goal is to build a reusable, highly customizable Power BI visual with:
 
+* Simple static KPI card mode
 * Click-to-flip animation
 * Front and back card content
 * Dynamic Power BI measure values
@@ -16,6 +17,39 @@ The long-term goal is to build a reusable, highly customizable Power BI visual w
 * Multi-card support
 * Formatting pane customization
 * Modern dashboard-style UI/UX
+
+---
+
+## ⭐ Product Vision / North Star
+
+Power BI Flip Card is a customizable smart KPI card visual for Power BI.
+
+It can work as a simple static card, an animated flip card, or a multi-card interactive grid. Users can turn features on or off through the formatting pane, allowing the same visual to support simple KPI displays, detailed drill-style cards, category-based card grids, and interactive dashboard filtering without using bookmarks.
+
+This is the main direction of the project and should always be remembered when continuing development.
+
+The goal is not only to build a card that flips. The goal is to build a flexible, reusable, one-stop-shop KPI card visual where features can work together cleanly.
+
+Core product principles:
+
+* The visual should start simple and work like a normal Power BI card.
+* Advanced features should be optional and controlled by the user.
+* Flip behavior should be optional.
+* Multi-card behavior should be optional.
+* Selection and filtering should work naturally with Power BI.
+* Formatting pane options should let users customize the visual without writing code.
+* Future features should be built in a way that does not break existing modes.
+* The visual should be useful for real dashboards, portfolio projects, and professional reporting.
+
+Long-term vision:
+
+```plaintext
+One visual.
+Multiple card modes.
+User-controlled features.
+No bookmarks required.
+Modern Power BI dashboard experience.
+```
 
 ---
 
@@ -61,7 +95,8 @@ Important working style:
 
 Create a reusable Power BI custom visual where:
 
-* A card flips when clicked
+* A card can behave like a normal KPI card
+* A card can optionally flip when clicked
 * The front face shows a main KPI
 * The back face shows a detail KPI
 * Category labels such as Vendor, Team, Agent, or Call Driver can be shown
@@ -482,6 +517,9 @@ Planned multi-card work:
 ### Later Features
 
 * [ ] Formatting pane support
+* [ ] Normal card / flip card toggle
+* [ ] Single-card / multi-card toggle
+* [ ] Selection/filtering toggle
 * [ ] Front card color settings
 * [ ] Back card color settings
 * [ ] Typography settings
@@ -492,6 +530,8 @@ Planned multi-card work:
 * [ ] Subtitle visibility toggle
 * [ ] Hover effects
 * [ ] Tooltips
+* [ ] Conditional formatting
+* [ ] Icons or status indicators
 * [ ] High contrast support
 * [ ] Keyboard navigation
 
@@ -611,7 +651,7 @@ Suggested commit message for this README update:
 
 ```bash
 git add README.md
-git commit -m "Update README for card instance array progress"
+git commit -m "Add product vision and update project status"
 git push
 ```
 
@@ -644,6 +684,11 @@ Selected border/glow feedback works.
 Values and percentage formatting work.
 Empty state works.
 
+Product vision:
+Power BI Flip Card is a customizable smart KPI card visual for Power BI.
+
+It can work as a simple static card, an animated flip card, or a multi-card interactive grid. Users can turn features on or off through the formatting pane, allowing the same visual to support simple KPI displays, detailed drill-style cards, category-based card grids, and interactive dashboard filtering without using bookmarks.
+
 Latest completed refactors:
 Added CardInstance interface.
 Added createCardInstance() helper.
@@ -665,6 +710,7 @@ Before the first major multi-card rendering step, do small preparation:
 Important:
 Do not jump directly into full multi-card rendering without testing each bridge step.
 The visual should remain stable as a single-card visual until the first controlled multi-card attempt.
+The long-term goal is a flexible one-stop-shop smart KPI card, not only a flip animation.
 ```
 
 Before moving forward, confirm:
@@ -702,6 +748,11 @@ For every change, show:
 2. What exact small part to add or replace
 3. Why it works
 4. What to test before moving on
+
+Product vision:
+Power BI Flip Card is a customizable smart KPI card visual for Power BI.
+
+It can work as a simple static card, an animated flip card, or a multi-card interactive grid. Users can turn features on or off through the formatting pane, allowing the same visual to support simple KPI displays, detailed drill-style cards, category-based card grids, and interactive dashboard filtering without using bookmarks.
 
 Current goal:
 Continue from the README’s “Next Session Starting Point.”
@@ -741,6 +792,7 @@ Important:
 Do not jump directly into full multi-card rendering yet.
 The next steps should still keep the visual stable as a single-card visual.
 You may group related safe helper-only changes together, but do not combine unrelated changes like multi-card loops, selection-state redesign, and layout changes in one big step.
+Always remember the long-term goal: this should become a flexible one-stop-shop smart KPI card visual, not only a flip card.
 ```
 
 ---
@@ -749,12 +801,18 @@ You may group related safe helper-only changes together, but do not combine unre
 
 Build a reusable custom Power BI visual that makes dashboards feel more modern, interactive, and web-like.
 
-This visual should eventually support:
+The project North Star is:
 
-* Modern KPI cards
-* Animated dashboard storytelling
-* Reusable custom visual design
-* Power BI interactions without bookmarks
-* Rich formatting options
-* Multiple cards driven by data
-* Premium dashboard experiences
+```plaintext
+Power BI Flip Card = a customizable smart KPI card visual.
+```
+
+It should eventually support:
+
+* Simple static KPI card mode
+* Animated flip card mode
+* Multi-card interactive grid mode
+* Category-based card generation
+* Power BI filtering without bookmarks
+* Rich formatting pane customization
+* Professional dashboard-ready styling
