@@ -83,11 +83,8 @@ export class Visual implements IVisual {
         const rowCount = this.getCategoryRowCount(dataView);
         const cardData = rowCount > 0 ? this.getCardDataForRow(dataView, 0) : undefined;
 
-        const cardInstance: CardInstance | undefined = cardData
-            ? {
-                data: cardData,
-                elements: this.cardElements
-            }
+        const cardInstance = cardData
+            ? this.createCardInstance(cardData, this.cardElements)
             : undefined;
         
         if(!cardInstance) {
@@ -99,7 +96,7 @@ export class Visual implements IVisual {
         }
 
         this.currentSelectionId = cardInstance.data.selectionId;
-        this.renderCard(cardInstance.data, cardInstance.elements);
+        this.renderCard(cardInstance);
     }
 
         private resizeCard(options: VisualUpdateOptions): void {
@@ -171,7 +168,20 @@ export class Visual implements IVisual {
         return labelColumn.values.length;
     }
 
-    private renderCard(cardData: CardData, cardElements: CardDomElements): void {
+    private createCardInstance(
+        cardData: CardData,
+        cardElements: CardDomElements
+    ): CardInstance {
+        return {
+            data: cardData,
+            elements: cardElements
+        };
+    }
+
+    private renderCard(cardInstance: CardInstance): void {
+        const cardData = cardInstance.data;
+        const cardElements = cardInstance.elements;
+
         cardElements.frontLabel.textContent = cardData.label;
         cardElements.frontTitle.textContent = cardData.frontTitle;
         cardElements.frontValue.textContent = cardData.frontValue;
