@@ -71,9 +71,7 @@ export class Visual implements IVisual {
         this.cardContainer.appendChild(this.cardElements.wrapper);
         this.target.appendChild(this.cardContainer);
 
-        this.cardElements.wrapper.addEventListener("click", (event: MouseEvent) => {
-            this.onCardClick(event, this.cardInstances[0]);
-        });
+        this.attachCardClickBehavior(this.cardElements);
     }
 
     public update(options: VisualUpdateOptions): void {
@@ -83,6 +81,7 @@ export class Visual implements IVisual {
         const rowCount = this.getCategoryRowCount(dataView);
 
         this.cardInstances = this.createCardInstances(dataView, rowCount);
+        this.rebuildCardContainer(this.cardInstances);
 
         if (this.cardInstances.length === 0) {
             this.clearSelectionState();
@@ -94,15 +93,16 @@ export class Visual implements IVisual {
         this.renderCard(this.cardInstances[0]);
     }
 
-        private resizeCard(options: VisualUpdateOptions): void {
-            this.cardElements.wrapper.style.width = `${options.viewport.width}px`;
-            this.cardElements.wrapper.style.height = `${options.viewport.height}px`;
-        }
+    private resizeCard(options: VisualUpdateOptions): void {
+        this.cardElements.wrapper.style.width = `${options.viewport.width}px`;
+        this.cardElements.wrapper.style.height = `${options.viewport.height}px`;
+    }
 
-        private clearSelectionState(): void {
-            this.hasActiveSelection = false;
-            this.cardElements.wrapper.classList.remove("is-selected");
-        }
+    private clearSelectionState(): void {
+        this.hasActiveSelection = false;
+        this.cardElements.wrapper.classList.remove("is-selected");
+    }
+
     private getCardDataForRow(dataView: DataView | undefined, rowIndex: number): CardData | undefined {
         if (!dataView || !dataView.categorical) {
             return undefined
@@ -179,6 +179,18 @@ export class Visual implements IVisual {
         return [cardInstance];
     }
 
+    private rebuildCardContainer(cardInstances: CardInstance[]): void {
+        this.cardContainer.replaceChildren();
+
+        if (cardInstances.length === 0) {
+            this.cardContainer.appendChild(this.cardElements.wrapper);
+
+            return;
+        }
+
+        this.cardContainer.appendChild(cardInstances[0].elements.wrapper);
+    }
+
     private createCardInstanceForRow(
         dataView: DataView | undefined,
         rowIndex: number,
@@ -218,42 +230,62 @@ export class Visual implements IVisual {
         cardElements.backSubtitle.textContent = cardData.backSubtitle;
     }
 
-        private onCardClick(
-            event: MouseEvent,
-            cardInstance: CardInstance | undefined
-        ): void {
-            const cardElements = cardInstance
-                ? cardInstance.elements
-                : this.cardElements;
+    private attachCardClickBehavior(cardElements: CardDomElements): void {
+        cardElements.wrapper.addEventListener("click", (event: MouseEvent) => {
+            const cardInstance = this.getCardInstanceForElements(cardElements);
 
-            const selectionId = cardInstance
-                ? cardInstance.data.selectionId
-                : undefined;
+            this.onCardClick(event, cardInstance);
+        });
+    }
 
-            this.isFlipped = !this.isFlipped;
-            cardElements.inner.classList.toggle("is-flipped", this.isFlipped);
+    private getCardInstanceForElements(cardElements: CardDomElements): CardInstance | undefined {
+        for (let index = 0; index < this.cardInstances.length; index++) {
+            const cardInstance = this.cardInstances[index];
 
-            if (!selectionId) {
-                return;
+            if (cardInstance.elements === cardElements) {
+                return cardInstance;
             }
-
-            if (this.hasActiveSelection) {
-                void this.selectionManager.clear().then(() => {
-                    this.clearSelectionState();
-                });
-
-                return;
-            }
-
-            const multiSelect = event.ctrlKey || event.metaKey;
-
-            void this.selectionManager
-                .select(selectionId, multiSelect)
-                .then((selectionIds: ISelectionId[]) => {
-                    this.hasActiveSelection = selectionIds.length > 0;
-                    cardElements.wrapper.classList.toggle("is-selected", this.hasActiveSelection);
-                });
         }
+
+        return undefined;
+    }
+
+    private onCardClick(
+        event: MouseEvent,
+        cardInstance: CardInstance | undefined
+    ): void {
+        const cardElements = cardInstance
+            ? cardInstance.elements
+            : this.cardElements;
+
+        const selectionId = cardInstance
+            ? cardInstance.data.selectionId
+            : undefined;
+
+        this.isFlipped = !this.isFlipped;
+        cardElements.inner.classList.toggle("is-flipped", this.isFlipped);
+
+        if (!selectionId) {
+            return;
+        }
+
+        if (this.hasActiveSelection) {
+            void this.selectionManager.clear().then(() => {
+                this.clearSelectionState();
+            });
+
+            return;
+        }
+
+        const multiSelect = event.ctrlKey || event.metaKey;
+
+        void this.selectionManager
+            .select(selectionId, multiSelect)
+            .then((selectionIds: ISelectionId[]) => {
+                this.hasActiveSelection = selectionIds.length > 0;
+                cardElements.wrapper.classList.toggle("is-selected", this.hasActiveSelection);
+            });
+    }
 
         private showEmptyState(cardElements: CardDomElements): void {
             cardElements.frontLabel.textContent = "No label";
