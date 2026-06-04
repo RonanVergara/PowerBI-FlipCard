@@ -90,17 +90,23 @@ export class Visual implements IVisual {
             return;
         }
 
-        this.renderCard(this.cardInstances[0]);
+        for (let index = 0; index < this.cardInstances.length; index++) {
+            this.renderCard(this.cardInstances[index]);
+        }
     }
 
     private resizeCard(options: VisualUpdateOptions): void {
-        this.cardElements.wrapper.style.width = `${options.viewport.width}px`;
-        this.cardElements.wrapper.style.height = `${options.viewport.height}px`;
+        this.cardContainer.style.width = `${options.viewport.width}px`;
+        this.cardContainer.style.height = `${options.viewport.height}px`;
     }
 
     private clearSelectionState(): void {
         this.hasActiveSelection = false;
         this.cardElements.wrapper.classList.remove("is-selected");
+
+        for (let index = 0; index < this.cardInstances.length; index++) {
+            this.cardInstances[index].elements.wrapper.classList.remove("is-selected");
+        }
     }
 
     private getCardDataForRow(dataView: DataView | undefined, rowIndex: number): CardData | undefined {
@@ -170,17 +176,36 @@ export class Visual implements IVisual {
             return [];
         }
 
-        const cardInstance = this.createCardInstanceForRow(dataView, 0, this.cardElements);
+        const cardInstances: CardInstance[] = [];
 
-        if (!cardInstance) {
-            return [];
+        for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
+            const cardElements = rowIndex === 0
+                ? this.cardElements
+                : this.createCardElements();
+
+            const cardInstance = this.createCardInstanceForRow(dataView, rowIndex, cardElements);
+
+            if (!cardInstance) {
+                continue;
+            }
+
+            if (rowIndex > 0) {
+                this.attachCardClickBehavior(cardElements);
+            }
+
+            cardInstances.push(cardInstance);
         }
 
-        return [cardInstance];
+        return cardInstances;
     }
 
     private rebuildCardContainer(cardInstances: CardInstance[]): void {
         this.cardContainer.replaceChildren();
+
+        const isMultiCard = cardInstances.length > 1;
+
+        this.cardContainer.classList.toggle("is-single-card", !isMultiCard);
+        this.cardContainer.classList.toggle("is-multi-card", isMultiCard);
 
         if (cardInstances.length === 0) {
             this.cardContainer.appendChild(this.cardElements.wrapper);
@@ -188,7 +213,9 @@ export class Visual implements IVisual {
             return;
         }
 
-        this.cardContainer.appendChild(cardInstances[0].elements.wrapper);
+        for (let index = 0; index < cardInstances.length; index++) {
+            this.cardContainer.appendChild(cardInstances[index].elements.wrapper);
+        }
     }
 
     private createCardInstanceForRow(
@@ -262,7 +289,9 @@ export class Visual implements IVisual {
             ? cardInstance.data.selectionId
             : undefined;
 
-        this.isFlipped = !this.isFlipped;
+        const isCardFlipped = cardElements.inner.classList.contains("is-flipped");
+
+        this.isFlipped = !isCardFlipped;
         cardElements.inner.classList.toggle("is-flipped", this.isFlipped);
 
         if (!selectionId) {
