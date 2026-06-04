@@ -298,7 +298,9 @@ export class Visual implements IVisual {
             return;
         }
 
-        if (this.hasActiveSelection) {
+        const isClickedCardSelected = cardElements.wrapper.classList.contains("is-selected");
+
+        if (isClickedCardSelected) {
             void this.selectionManager.clear().then(() => {
                 this.clearSelectionState();
             });
@@ -306,10 +308,10 @@ export class Visual implements IVisual {
             return;
         }
 
-        const multiSelect = event.ctrlKey || event.metaKey;
+        this.clearSelectionState();
 
         void this.selectionManager
-            .select(selectionId, multiSelect)
+            .select(selectionId, false)
             .then((selectionIds: ISelectionId[]) => {
                 this.hasActiveSelection = selectionIds.length > 0;
                 cardElements.wrapper.classList.toggle("is-selected", this.hasActiveSelection);
