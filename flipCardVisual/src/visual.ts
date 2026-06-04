@@ -54,7 +54,6 @@ export class Visual implements IVisual {
     private readonly cardElements: CardDomElements;
 
     private cardInstances: CardInstance[] = [];
-    private isFlipped: boolean = false;
     private hasActiveSelection: boolean = false;
 
     constructor(options: VisualConstructorOptions) {
@@ -277,26 +276,17 @@ export class Visual implements IVisual {
         return undefined;
     }
 
-    private onCardClick(
-        event: MouseEvent,
-        cardInstance: CardInstance | undefined
-    ): void {
-        const cardElements = cardInstance
-            ? cardInstance.elements
-            : this.cardElements;
+    private toggleCardFlip(cardElements: CardDomElements): boolean {
+        const wasFlipped = cardElements.inner.classList.contains("is-flipped");
 
-        const selectionId = cardInstance
-            ? cardInstance.data.selectionId
-            : undefined;
+        cardElements.inner.classList.toggle("is-flipped", !wasFlipped);
 
-        const isCardFlipped = cardElements.inner.classList.contains("is-flipped");
+        return wasFlipped;
+    }
 
-        this.isFlipped = !isCardFlipped;
-        cardElements.inner.classList.toggle("is-flipped", this.isFlipped);
-
-        if (isCardFlipped) {
-            return;
-        }
+    private handleCardSelection(cardInstance: CardInstance): void {
+        const cardElements = cardInstance.elements;
+        const selectionId = cardInstance.data.selectionId;
 
         if (!selectionId) {
             return;
@@ -322,17 +312,36 @@ export class Visual implements IVisual {
             });
     }
 
-        private showEmptyState(cardElements: CardDomElements): void {
-            cardElements.frontLabel.textContent = "No label";
-            cardElements.frontTitle.textContent = "Add a measure";
-            cardElements.frontValue.textContent = "No value";
-            cardElements.frontSubtitle.textContent = "Drag a measure into Card Value";
+    private onCardClick(
+        event: MouseEvent,
+        cardInstance: CardInstance | undefined
+    ): void {
+        event.stopPropagation();
 
-            cardElements.backLabel.textContent = "No label";
-            cardElements.backTitle.textContent = "Details";
-            cardElements.backValue.textContent = "No detail";
-            cardElements.backSubtitle.textContent = "Optional: drag another measure into Detail Value";
+        const cardElements = cardInstance
+            ? cardInstance.elements
+            : this.cardElements;
+
+        const wasFlipped = this.toggleCardFlip(cardElements);
+
+        if (wasFlipped || !cardInstance) {
+            return;
         }
+
+        this.handleCardSelection(cardInstance);
+    }
+
+    private showEmptyState(cardElements: CardDomElements): void {
+        cardElements.frontLabel.textContent = "No label";
+        cardElements.frontTitle.textContent = "Add a measure";
+        cardElements.frontValue.textContent = "No value";
+        cardElements.frontSubtitle.textContent = "Drag a measure into Card Value";
+
+        cardElements.backLabel.textContent = "No label";
+        cardElements.backTitle.textContent = "Details";
+        cardElements.backValue.textContent = "No detail";
+        cardElements.backSubtitle.textContent = "Optional: drag another measure into Detail Value";
+    }
 
     private createCardElements(): CardDomElements {
         const wrapper = document.createElement("div");
