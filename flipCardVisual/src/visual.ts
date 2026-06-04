@@ -111,7 +111,7 @@ export class Visual implements IVisual {
 
     private getCardDataForRow(dataView: DataView | undefined, rowIndex: number): CardData | undefined {
         if (!dataView || !dataView.categorical) {
-            return undefined
+            return undefined;
         }
         const labelColumn = this.findCategoryByRole(dataView, "cardLabel");
         const cardMeasure = this.findMeasureByRole(dataView, "cardValue");
@@ -293,6 +293,10 @@ export class Visual implements IVisual {
 
         this.isFlipped = !isCardFlipped;
         cardElements.inner.classList.toggle("is-flipped", this.isFlipped);
+
+        if (isCardFlipped) {
+            return;
+        }
 
         if (!selectionId) {
             return;
