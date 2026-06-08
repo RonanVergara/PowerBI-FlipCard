@@ -1,6 +1,6 @@
-# 🚀 Power BI Flip Card Custom Visual
+# Power BI Flip Card Custom Visual
 
-## 📌 Project Overview
+## Project Overview
 
 Power BI Flip Card is a custom Power BI visual that creates a modern, interactive smart KPI card experience.
 
@@ -41,7 +41,7 @@ The goal is to build a flexible KPI super-visual that can start simple and grow 
 
 ---
 
-## 🧠 Product Principles
+## Product Principles
 
 This project follows these principles:
 
@@ -74,7 +74,7 @@ Example: whole card flips, small icon/filter area selects
 
 ---
 
-## 🎯 Main Goal
+## Main Goal
 
 Create a reusable Power BI custom visual where:
 
@@ -114,18 +114,23 @@ Empty state works.
 Flip and selection logic are separated into helpers.
 Internal feature gates for flip and selection are prepared.
 visual.ts helper sections are organized.
+Multi-card grid layout works.
+Multi-card compact text rules work.
+Vertical scrolling for many cards works.
+Narrow visual safety layout works.
 ```
 
 Current development stage:
 
 ```plaintext
-Phase 4 — Multi-card interaction stabilization
+Phase 4 — Multi-card interaction and layout stabilization
 ```
 
 Current focus:
 
 ```plaintext
-Improve multi-card layout rules while keeping all existing flip and selection behavior stable.
+Controlled multi-card support is now stable enough to begin preparing the next foundation step.
+The next step should still be small and safe.
 ```
 
 Current important status:
@@ -134,12 +139,13 @@ Current important status:
 The visual can now render multiple CardInstance objects from category rows.
 The click flow is cleaner and separated into helper methods.
 The code is prepared for future optional flip and optional selection settings.
-The next step is layout stabilization, not formatting pane yet.
+The multi-card layout is more predictable using CSS grid rules.
+The next step should not be a full redesign.
 ```
 
 ---
 
-## 🧩 Current Field Wells
+## Current Field Wells
 
 ```plaintext
 Card Label   → Category shown on the card, such as Vendor, Agent, Team, or Call Driver
@@ -175,7 +181,7 @@ Front value: 16.63K
 
 ---
 
-## 🧠 Current Code Pattern
+## Current Code Pattern
 
 The current `visual.ts` structure supports controlled multi-card rendering and cleaner card interaction flow.
 
@@ -220,7 +226,7 @@ One function should have one main job.
 
 ---
 
-## 🧱 Current DOM Structure
+## Current DOM Structure
 
 The visual can render multiple cards inside a container.
 
@@ -242,7 +248,7 @@ The number of cards depends on category rows from Power BI.
 
 ---
 
-## 🧱 Current TypeScript Shapes
+## Current TypeScript Shapes
 
 ### `CardData`
 
@@ -298,48 +304,52 @@ this.cardInstances: CardInstance[]
 
 ---
 
-## 🎨 Current Layout Direction
+## Current Layout Direction
 
-The card container is prepared for multiple cards.
+The card container supports both single-card and multi-card modes.
 
-Current container layout:
-
-```less
-.flip-card-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    width: 100%;
-    height: 100%;
-    box-sizing: border-box;
-    overflow: hidden;
-}
-```
-
-Current multi-card layout direction:
-
-```less
-.flip-card-container.is-multi-card {
-    align-content: flex-start;
-    padding: 12px;
-}
-
-.flip-card-container.is-multi-card .flip-card-wrapper {
-    flex: 1 1 220px;
-    width: auto;
-    height: 160px;
-    max-width: 320px;
-}
-```
-
-Important note:
+Single-card mode:
 
 ```plaintext
-overflow: auto caused temporary scrollbars during the flip animation.
-overflow: hidden fixed the scrollbar flash.
+Uses the full visual area.
+Keeps the large KPI card style.
+Keeps overflow hidden to avoid flip animation scrollbar flash.
 ```
 
-Scrolling behavior for many cards should be designed intentionally later.
+Multi-card mode:
+
+```plaintext
+Uses CSS grid for predictable rows and columns.
+Uses compact text rules so each card fits better.
+Allows vertical scrolling only when many cards do not fit.
+Prevents horizontal scrolling.
+Has a narrow-width safety rule for very small visual sizes.
+```
+
+Current multi-card layout behavior:
+
+```plaintext
+Normal multi-card layout:
+- Cards use a controlled grid.
+- Columns fit between 220px and 320px.
+- Rows use a consistent 160px height.
+- Cards are centered when there is extra horizontal space.
+
+Many-card behavior:
+- Vertical scrolling appears only when needed.
+- Horizontal scrolling is hidden.
+
+Very narrow visual behavior:
+- Cards switch to one compact column.
+- Row height, padding, and text sizes are reduced.
+```
+
+Important layout principle:
+
+```plaintext
+Single-card mode should feel premium and spacious.
+Multi-card mode should feel compact, readable, and controlled.
+```
 
 ---
 
@@ -349,7 +359,7 @@ The project is promising, but it is still early-stage.
 
 Current limitations:
 
-* Multi-card rendering works, but layout is still basic.
+* Multi-card layout is improved, but still not user-configurable.
 * Selection behavior is still simple and single-select.
 * Ctrl / Meta multi-select is not handled yet.
 * Flip behavior and Power BI selection still share the same card click, but their logic is now separated internally.
@@ -376,7 +386,7 @@ They are the roadmap.
 
 ---
 
-## 🧭 Product Roadmap
+## Product Roadmap
 
 The stronger product direction is to become a mode-based KPI super-visual.
 
@@ -394,7 +404,7 @@ Long-term priority stack:
 
 ```plaintext
 1. Proper formatting pane integration
-2. True multi-card grid support
+2. True user-controlled multi-card grid support
 3. Separate flip behavior from selection/filter behavior
 4. Tooltip and context menu support
 5. Accessibility support
@@ -408,54 +418,72 @@ Long-term priority stack:
 Immediate development path:
 
 ```plaintext
-Improve multi-card layout rules
+Complete documentation and commit Phase 4.7 layout stabilization
 ↓
-Formatting pane foundation
+Prepare formatting pane foundation carefully
 ↓
-Optional flip setting
+Add first simple formatting setting
 ↓
-Optional selection/filter setting
+Add optional flip setting
 ↓
-Additional KPI customization features
+Add optional selection/filter setting
+↓
+Add additional KPI customization features
 ```
 
 ---
 
-## 🚧 Current Development Focus
+## Current Development Focus
 
-### Phase 4.7 — Improve Multi-Card Layout Rules
+### Phase 4.7 — Multi-Card Layout Rules
 
-Goal:
+Status:
 
 ```plaintext
-Make multi-card display cleaner and more predictable while keeping the existing flip and selection behavior stable.
+Completed and tested locally.
 ```
 
-Do:
+Completed:
 
-* Improve responsive card sizing rules.
-* Keep the single-card experience stable.
-* Keep the multi-card experience stable.
-* Avoid scrollbars flashing during flip animation.
-* Keep layout changes CSS-focused where possible.
-* Test resizing carefully after every layout change.
+* Replaced loose flex-style multi-card sizing with a more predictable CSS grid layout.
+* Added compact multi-card text rules.
+* Added vertical scrolling for many-card scenarios.
+* Prevented horizontal scrolling.
+* Added narrow-width safety rules.
+* Confirmed single-card mode still looks stable.
+* Confirmed multi-card mode still works.
+* Confirmed flip and selection behavior still work after layout changes.
 
-Do not:
+Do not next:
 
-* Do not add formatting pane yet.
-* Do not add user-facing interaction toggles yet.
+* Do not add the full formatting pane in one big step.
+* Do not add multiple user-facing interaction toggles all at once.
 * Do not add separate click targets yet.
 * Do not redesign the whole visual.
 * Do not move helpers into separate files yet.
 
+Recommended next focus:
+
+```plaintext
+Phase 4.8 — Prepare Formatting Pane Foundation
+```
+
+Goal:
+
+```plaintext
+Start formatting pane work carefully with a small, low-risk setting.
+Keep the visual stable.
+Do not wire every customization option at once.
+```
+
 ---
 
-## 🧩 Future Product Features
+## Future Product Features
 
 Near-term:
 
-* [ ] Improve responsive layout rules for multiple cards
-* [ ] Decide scrolling behavior for many cards
+* [x] Improve responsive layout rules for multiple cards
+* [x] Decide basic scrolling behavior for many cards
 * [ ] Decide whether one card or many cards can be flipped at the same time
 * [ ] Add formatting pane foundation
 * [ ] Add normal card / flip card toggle
@@ -493,18 +521,18 @@ Later:
 
 ---
 
-## 🧩 Target Smart KPI Card Anatomy
+## Target Smart KPI Card Anatomy
 
 Future front face example:
 
 ```plaintext
 ┌─────────────────────────────────────┐
-│ Status chip   KPI title      Icon   │
+│ Status chip        KPI title   Icon │
 │ Category / segment label            │
 │                                     │
 │ Main value                          │
-│ Variance vs target   ▲ +4.3%        │
-│ Target: 92%          Prior: 88%     │
+│ Variance vs target        ▲ +4.3%   │
+│ Target: 92%    Prior: 88%           │
 │ Mini trend sparkline                │
 │ Optional action row / hint          │
 └─────────────────────────────────────┘
@@ -526,7 +554,7 @@ This is the future direction, not the current implemented state.
 
 ---
 
-## 🧪 Build Command
+## Build Command
 
 Run this from the visual project folder:
 
@@ -555,13 +583,12 @@ These warnings should be handled later as the project matures.
 
 ---
 
-## 📂 Project Folder Structure
+## Project Folder Structure
 
 ```plaintext
 Power BI Custom Visual
 │
 └── PowerBI-FlipCard
-    │
     ├── README.md
     ├── .gitignore
     ├── docs
@@ -584,13 +611,13 @@ Possible future structure:
 
 ```plaintext
 src/
-  visual.ts
-  cardTypes.ts
-  cardDom.ts
-  cardData.ts
-  cardInteraction.ts
-  cardFormatting.ts
-  cardLayout.ts
+├── visual.ts
+├── cardTypes.ts
+├── cardDom.ts
+├── cardData.ts
+├── cardInteraction.ts
+├── cardFormatting.ts
+└── cardLayout.ts
 ```
 
 Current decision:
@@ -602,14 +629,14 @@ Only move helpers into separate files after the helper groups become stable and 
 
 ---
 
-## 📝 Documentation Strategy
+## Documentation Strategy
 
 Use this documentation structure:
 
 ```plaintext
-README.md                = public-facing project overview, current status, roadmap, and build notes
-docs/DEVELOPMENT_LOG.md  = detailed phase history, learning notes, test results, and next session starting point
-CHANGELOG.md             = future version/release notes only
+README.md = public-facing project overview, current status, roadmap, and build notes
+docs/DEVELOPMENT_LOG.md = detailed phase history, learning notes, test results, and next session starting point
+CHANGELOG.md = future version/release notes only
 ```
 
 Update cadence:
@@ -627,12 +654,13 @@ End of session:
 
 ---
 
-## 💾 Git Workflow
+## Git Workflow
 
 Use this after every successful tested milestone:
 
 ```bash
 cd "C:\Power BI Custom Visual\PowerBI-FlipCard"
+
 git status
 git diff
 git add .
@@ -647,9 +675,15 @@ Expected clean result:
 nothing to commit, working tree clean
 ```
 
+Recommended commit title for this session:
+
+```bash
+git commit -m "Stabilize multi-card layout rules"
+```
+
 ---
 
-## 🔥 Long-Term Vision
+## Long-Term Vision
 
 Build a reusable custom Power BI visual that makes dashboards feel more modern, interactive, and web-like.
 

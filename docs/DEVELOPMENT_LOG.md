@@ -218,7 +218,7 @@ Phase 4 is the largest development phase so far.
 
 The visual moved from a single-card flip card into a stable multi-card-capable visual.
 
-It now supports multiple card instances from Power BI category rows, controlled card selection, front/back click behavior, and cleaner helper-based interaction logic.
+It now supports multiple card instances from Power BI category rows, controlled card selection, front/back click behavior, cleaner helper-based interaction logic, and improved multi-card layout rules.
 
 ---
 
@@ -391,6 +391,244 @@ Empty state still works.
 
 ---
 
+## Phase 4.7 — Improve Multi-Card Layout Rules
+
+## Goal
+
+Make multi-card display cleaner, more predictable, and safer during resizing while keeping all existing flip and selection behavior stable.
+
+This phase intentionally stayed CSS-focused.
+
+No TypeScript interaction logic was changed.
+
+No formatting pane settings were added.
+
+No click target redesign was added.
+
+---
+
+## Phase 4.7.1 — Predictable Multi-Card Grid Layout
+
+### Completed Work
+
+* Replaced loose flex-based multi-card sizing with CSS grid behavior.
+* Used controlled column sizing for multi-card mode.
+* Kept single-card mode unchanged.
+* Centered the grid when extra horizontal space is available.
+* Kept multi-card row height consistent.
+
+### Main CSS Direction
+
+```less
+.flip-card-container.is-multi-card {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 320px));
+    grid-auto-rows: 160px;
+    justify-content: center;
+    align-content: flex-start;
+    padding: 12px;
+}
+
+.flip-card-container.is-multi-card .flip-card-wrapper {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+}
+```
+
+### Why It Matters
+
+The old flex layout worked, but it allowed card sizing to feel loose.
+
+The grid layout makes the multi-card visual feel more controlled and closer to a KPI grid.
+
+### Confirmed Status
+
+```plaintext
+Single-card mode still fills the visual.
+Multi-card mode still shows all cards.
+Cards still flip.
+Power BI filtering still works.
+Clicking another card still moves selection.
+Clicking selected front-facing card still clears selection.
+Back-facing card click still flips only.
+Selected glow still works.
+Percentage formatting still works.
+Resize behavior is cleaner.
+```
+
+---
+
+## Phase 4.7.2 — Compact Multi-Card Text Rules
+
+### Completed Work
+
+* Added compact text and spacing rules for multi-card mode.
+* Reduced face padding in multi-card mode.
+* Reduced label, title, value, and subtitle text sizes in multi-card mode.
+* Kept single-card mode visually larger and more premium.
+
+### Main CSS Direction
+
+```less
+.flip-card-container.is-multi-card .flip-card-face {
+    padding: 18px;
+    border-radius: 16px;
+}
+
+.flip-card-container.is-multi-card .flip-card-label {
+    font-size: 11px;
+    margin-bottom: 6px;
+}
+
+.flip-card-container.is-multi-card .flip-card-title {
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+
+.flip-card-container.is-multi-card .flip-card-value {
+    font-size: 30px;
+    margin-bottom: 8px;
+}
+
+.flip-card-container.is-multi-card .flip-card-subtitle {
+    font-size: 11px;
+}
+```
+
+### Why It Matters
+
+Single-card mode can use large KPI styling because it owns the full visual area.
+
+Multi-card mode needs tighter spacing because several cards share the same visual area.
+
+This change makes the visual feel more usable as a KPI grid.
+
+### Confirmed Status
+
+```plaintext
+Single-card mode still looks the same.
+Multi-card cards look less crowded.
+Long labels fit better.
+KPI values remain readable.
+Flip behavior still works.
+Selection behavior still works.
+Selected glow still works.
+Resize behavior still works.
+Empty state still works.
+```
+
+---
+
+## Phase 4.7.3 — Vertical Scrolling for Many Cards
+
+### Completed Work
+
+* Added multi-card vertical scrolling only when needed.
+* Prevented horizontal scrolling.
+* Kept base single-card overflow behavior unchanged.
+* Made many-card scenarios safer so cards are not silently hidden.
+
+### Main CSS Direction
+
+```less
+.flip-card-container.is-multi-card {
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+```
+
+### Why It Matters
+
+The base container uses `overflow: hidden` to avoid scrollbar flash during flip animation.
+
+That is good for single-card mode, but in multi-card mode it can hide cards when there are too many category rows.
+
+This rule keeps the visual clean while allowing users to access cards that do not fit vertically.
+
+### Confirmed Status
+
+```plaintext
+Single-card mode still has no scrollbar.
+Multi-card mode still shows the clean grid.
+With only a few cards, no unnecessary scrollbar appears.
+With many cards or smaller visual height, vertical scroll appears.
+No horizontal scrollbar appears.
+Cards still flip correctly.
+Front-facing click still filters.
+Clicking another card still moves the filter.
+Clicking selected front-facing card still clears selection.
+Back-facing card click flips only and does not change filter.
+Selected border/glow still works.
+Resize behavior still works.
+```
+
+---
+
+## Phase 4.7.4 — Narrow-Width Safety Rule
+
+### Completed Work
+
+* Added a media query for very narrow visual widths.
+* Forced multi-card mode into one compact column when the visual is too narrow.
+* Reduced row height, padding, gap, and text sizes for narrow mode.
+* Protected the layout from feeling broken when the Power BI visual is resized very small.
+
+### Main CSS Direction
+
+```less
+@media (max-width: 260px) {
+    .flip-card-container.is-multi-card {
+        grid-template-columns: 1fr;
+        grid-auto-rows: 150px;
+        padding: 8px;
+        gap: 8px;
+    }
+
+    .flip-card-container.is-multi-card .flip-card-face {
+        padding: 14px;
+        border-radius: 14px;
+    }
+
+    .flip-card-container.is-multi-card .flip-card-value {
+        font-size: 26px;
+    }
+
+    .flip-card-container.is-multi-card .flip-card-title {
+        font-size: 12px;
+    }
+
+    .flip-card-container.is-multi-card .flip-card-label,
+    .flip-card-container.is-multi-card .flip-card-subtitle {
+        font-size: 10px;
+    }
+}
+```
+
+### Why It Matters
+
+Power BI users can resize visuals freely.
+
+If the visual becomes very narrow, the normal multi-card grid can become cramped.
+
+This safety rule makes the visual degrade more gracefully by switching to one compact column.
+
+### Confirmed Status
+
+```plaintext
+Normal single-card mode still looks the same.
+Normal multi-card mode still looks the same.
+Very narrow multi-card mode becomes one compact column.
+No horizontal scrollbar appears.
+Vertical scrolling still works when many cards are present.
+Cards still flip.
+Front-facing click still filters.
+Back-facing click still flips back without changing filter.
+Selected border/glow still appears.
+```
+
+---
+
 # Current Code Mental Model
 
 ```plaintext
@@ -447,6 +685,32 @@ If card was front-facing and selection is enabled:
 
 ---
 
+# Current Layout Flow
+
+```plaintext
+Single-card mode
+↓
+Use full visual area
+↓
+Use larger card styling
+↓
+Keep overflow hidden
+
+Multi-card mode
+↓
+Use grid layout
+↓
+Use compact card styling
+↓
+Allow vertical scrolling only when needed
+↓
+Prevent horizontal scrolling
+↓
+Use narrow-width safety rules when visual is very small
+```
+
+---
+
 # Latest Confirmed Working Behavior
 
 ```plaintext
@@ -465,6 +729,10 @@ Split flip and selection helpers work.
 Internal flip and selection gates work.
 Cleaned onCardClick() flow works.
 visual.ts helper sections are organized.
+CSS grid multi-card layout works.
+Compact multi-card text rules work.
+Many-card vertical scrolling works.
+Narrow-width safety layout works.
 ```
 
 ---
@@ -475,7 +743,7 @@ The project is stable for the current phase, but it is still early-stage.
 
 Known limitations:
 
-* Multi-card rendering works, but layout is still basic.
+* Multi-card layout is improved, but not user-configurable yet.
 * Selection behavior is still simple and single-select.
 * Ctrl / Meta multi-select is not handled yet.
 * Flip behavior and Power BI selection still share the same card click, but their logic is now separated internally.
@@ -507,9 +775,9 @@ They are the roadmap.
 Use this documentation structure:
 
 ```plaintext
-README.md                = public-facing project overview, current status, roadmap, and build notes
-docs/DEVELOPMENT_LOG.md  = detailed phase history, learning notes, test results, and next session starting point
-CHANGELOG.md             = future version/release notes only
+README.md = public-facing project overview, current status, roadmap, and build notes
+docs/DEVELOPMENT_LOG.md = detailed phase history, learning notes, test results, and next session starting point
+CHANGELOG.md = future version/release notes only
 ```
 
 Documentation rule:
@@ -558,6 +826,8 @@ Cards do not disappear after resize.
 Cards do not overlap in an unexpected way.
 Single-card layout still looks good.
 Multi-card layout still looks controlled.
+Many-card vertical scrolling works when needed.
+Very narrow visual width remains usable.
 ```
 
 ---
@@ -597,6 +867,7 @@ Use this after every successful tested milestone:
 
 ```bash
 cd "C:\Power BI Custom Visual\PowerBI-FlipCard"
+
 git status
 git diff
 git add .
@@ -609,6 +880,12 @@ Expected clean result:
 
 ```plaintext
 nothing to commit, working tree clean
+```
+
+Recommended commit title for this session:
+
+```bash
+git commit -m "Stabilize multi-card layout rules"
 ```
 
 ---
@@ -631,7 +908,7 @@ Then confirm:
 git status
 ```
 
-Expected:
+Expected after committing and pushing:
 
 ```plaintext
 nothing to commit, working tree clean
@@ -640,9 +917,8 @@ nothing to commit, working tree clean
 Current focus:
 
 ```plaintext
-Continue Phase 4 multi-card stabilization.
-The next step is Phase 4.7 — Improve Multi-Card Layout Rules.
-The visual should remain stable and behavior should stay the same after layout improvements.
+Continue from completed Phase 4.7 layout stabilization.
+The next step is Phase 4.8 — Prepare Formatting Pane Foundation.
 ```
 
 Current tested status:
@@ -662,22 +938,33 @@ Empty state works.
 Flip and selection logic are separated into helpers.
 Internal feature gates for flip and selection are prepared.
 onCardClick() is clean and easier to maintain.
+Multi-card grid layout works.
+Compact multi-card styling works.
+Vertical scrolling for many cards works.
+Narrow-width layout safety works.
 ```
 
 Latest known direction:
 
 ```plaintext
 Next development step:
-Phase 4.7 — Improve Multi-Card Layout Rules.
+Phase 4.8 — Prepare Formatting Pane Foundation.
 
 Important:
-Do not jump directly into a full redesign.
-Do not build the formatting pane yet.
-Do not add user-facing optional toggles yet.
-Do not create separate click targets yet.
-Do not move helpers into separate files yet.
+Do not jump directly into a full formatting pane redesign.
+Do not wire many settings at once.
+Do not combine formatting pane, selection-state redesign, click target redesign, and layout redesign in one big step.
+Start with one small, safe formatting pane setting.
+The visual should remain stable after each small step.
+```
 
-The next step should improve layout stability while preserving all tested interaction behavior.
+Suggested first Phase 4.8 direction:
+
+```plaintext
+Start by reading capabilities.json and visual.ts carefully.
+Identify the minimum format pane pattern needed for one safe setting.
+Recommended first setting: a simple card appearance setting or interaction setting that does not disturb existing behavior.
+Avoid adding all front/back color, typography, animation, and interaction settings in one session.
 ```
 
 ---
@@ -720,7 +1007,7 @@ Current goal:
 Continue from the README and DEVELOPMENT_LOG next starting point.
 
 Current phase:
-We are stabilizing controlled multi-card support, but the visual should still remain stable until each small step is tested.
+We finished Phase 4.7 layout stabilization and are preparing for Phase 4.8 — Formatting Pane Foundation.
 
 Current tested status:
 Single-card visual works.
@@ -737,12 +1024,17 @@ Empty state works.
 Flip and selection logic are separated into helpers.
 Internal feature gates for flip and selection are prepared.
 onCardClick() is clean and easier to maintain.
+Multi-card grid layout works.
+Compact multi-card styling works.
+Vertical scrolling for many cards works.
+Narrow-width layout safety works.
 
 Latest known direction:
-The next step is Phase 4.7 — Improve Multi-Card Layout Rules.
+The next step is Phase 4.8 — Prepare Formatting Pane Foundation.
 
 Important:
-Do not jump directly into a full redesign.
+Do not jump directly into a full formatting pane redesign.
+Do not wire many settings at once.
 Do not combine unrelated changes like formatting pane, selection-state redesign, click target redesign, and layout redesign in one big step.
 The next steps should still keep the visual stable.
 Always remember the long-term goal: this should become a flexible one-stop-shop smart KPI card visual, not only a flip card.
