@@ -14,6 +14,10 @@ import IVisualHost = powerbi.extensibility.visual.IVisualHost;
 import VisualConstructorOptions = powerbi.extensibility.visual.VisualConstructorOptions;
 import VisualUpdateOptions = powerbi.extensibility.visual.VisualUpdateOptions;
 
+// -----------------------------
+// Card types
+// -----------------------------
+
 interface CardData {
     label: string;
     frontTitle: string;
@@ -241,6 +245,10 @@ export class Visual implements IVisual {
         };
     }
 
+    // -----------------------------
+    // Card rendering helpers
+    // -----------------------------
+    
     private renderCard(cardInstance: CardInstance): void {
         const cardData = cardInstance.data;
         const cardElements = cardInstance.elements;
@@ -274,6 +282,26 @@ export class Visual implements IVisual {
         }
 
         return undefined;
+    }
+
+    // -----------------------------
+    // Card interaction helpers
+    // -----------------------------
+
+    private isCardFlipEnabled(): boolean {
+        return true;
+    }
+
+    private isCardSelectionEnabled(): boolean {
+        return true;
+    }
+
+    private handleCardFlip(cardElements: CardDomElements): boolean {
+        if (!this.isCardFlipEnabled()) {
+            return false;
+        }
+
+        return this.toggleCardFlip(cardElements);
     }
 
     private toggleCardFlip(cardElements: CardDomElements): boolean {
@@ -312,19 +340,34 @@ export class Visual implements IVisual {
             });
     }
 
+    private shouldHandleCardSelection(
+        wasFlippedBeforeClick: boolean,
+        cardInstance: CardInstance | undefined
+    ): cardInstance is CardInstance {
+        return this.isCardSelectionEnabled()
+            && !wasFlippedBeforeClick
+            && cardInstance !== undefined;
+    }
+
+    private getCardElementsForClick(
+        cardInstance: CardInstance | undefined
+    ): CardDomElements {
+        return cardInstance
+            ? cardInstance.elements
+            : this.cardElements;
+    }
+
     private onCardClick(
         event: MouseEvent,
         cardInstance: CardInstance | undefined
     ): void {
         event.stopPropagation();
 
-        const cardElements = cardInstance
-            ? cardInstance.elements
-            : this.cardElements;
+        const cardElements = this.getCardElementsForClick(cardInstance);
 
-        const wasFlipped = this.toggleCardFlip(cardElements);
+        const wasFlipped = this.handleCardFlip(cardElements);
 
-        if (wasFlipped || !cardInstance) {
+        if (!this.shouldHandleCardSelection(wasFlipped, cardInstance)) {
             return;
         }
 
@@ -342,6 +385,10 @@ export class Visual implements IVisual {
         cardElements.backValue.textContent = "No detail";
         cardElements.backSubtitle.textContent = "Optional: drag another measure into Detail Value";
     }
+
+    // -----------------------------
+    // Card creation helpers
+    // -----------------------------
 
     private createCardElements(): CardDomElements {
         const wrapper = document.createElement("div");

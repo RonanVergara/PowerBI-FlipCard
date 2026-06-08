@@ -149,15 +149,20 @@ Multi-card visual works.
 Card resizes correctly.
 Cards flip correctly.
 Power BI filtering works when a front-facing card is clicked.
-Clicking the selected front-facing card again clears the selection.
-Selected border/glow feedback works.
+Clicking another card moves the filter to that card.
+Clicking the selected front-facing card again clears selection.
 Clicking a back-facing card flips it to the front without changing the filter.
+Selected border/glow feedback works.
 Values and percentage formatting work.
 Empty state works.
 Helper bridge before multi-card rendering works.
 Controlled multi-card rendering works.
 Improved multi-card selection behavior works.
 Back-face click filter guard works.
+Flip logic and selection logic are now split into helpers.
+Internal feature gates for flip and selection are prepared.
+Card click flow is cleaner and easier to maintain.
+visual.ts is now organized with section comments.
 ```
 
 Current development stage:
@@ -176,8 +181,10 @@ Current important status:
 
 ```plaintext
 The visual now renders multiple CardInstance objects when multiple category rows are available.
-The next step is not a new feature.
-The next step is a helper refactor to split flip logic and selection logic inside visual.ts.
+Flip behavior and selection behavior have been separated into helper methods.
+Internal feature gates now prepare the visual for future optional flip and optional selection settings.
+The next step is not the formatting pane yet.
+The next step is to improve multi-card layout rules safely.
 ```
 
 ---
@@ -343,11 +350,63 @@ Front value: 16.63K
 * [x] Confirmed multi-card rendering, selected glow, formatting, empty state, and resize still work
 * [x] Committed the tested milestone to Git
 
+### Phase 4.5 — Split Flip and Selection Logic Into Helpers
+
+* [x] Split flip behavior away from direct `onCardClick()` logic
+* [x] Added `toggleCardFlip()` helper
+* [x] Added `handleCardSelection()` helper
+* [x] Added `shouldHandleCardSelection()` helper
+* [x] Simplified `onCardClick()` so it controls the interaction flow instead of doing all logic directly
+* [x] Preserved front-facing card selection behavior
+* [x] Preserved click-again-to-clear behavior
+* [x] Preserved back-face click guard behavior
+* [x] Confirmed single-card visual still works
+* [x] Confirmed multi-card visual still works
+* [x] Confirmed resize, flip, filtering, selected glow, formatting, and empty state still work
+
+### Phase 4.6A — Internal Feature Gates for Flip and Selection
+
+* [x] Added `isCardFlipEnabled()` helper
+* [x] Added `isCardSelectionEnabled()` helper
+* [x] Updated selection decision logic to check whether card selection is enabled
+* [x] Prepared the code for future formatting pane interaction toggles
+* [x] Kept both helpers returning `true` for now
+* [x] Confirmed there is no visible behavior change
+* [x] Confirmed all existing interaction tests still pass
+
+### Phase 4.6B — Move Flip Handling Into One Helper
+
+* [x] Added `handleCardFlip()` helper
+* [x] Moved flip-enabled checking out of `onCardClick()`
+* [x] Kept `toggleCardFlip()` focused only on toggling the flipped CSS class
+* [x] Made `onCardClick()` easier to read
+* [x] Confirmed there is no visible behavior change
+* [x] Confirmed all existing interaction tests still pass
+
+### Phase 4.6C — Move Card Element Resolution Into a Helper
+
+* [x] Added `getCardElementsForClick()` helper
+* [x] Moved card element lookup out of `onCardClick()`
+* [x] Preserved fallback support for the original single-card `this.cardElements`
+* [x] Made `onCardClick()` focus only on the click flow
+* [x] Confirmed single-card and multi-card behavior still work
+* [x] Confirmed all existing interaction tests still pass
+
+### Phase 4.6D — Organize `visual.ts` With Section Comments
+
+* [x] Added section comments for card types
+* [x] Added section comments for card creation helpers
+* [x] Added section comments for card rendering helpers
+* [x] Added section comments for card interaction helpers
+* [x] Improved readability without moving code into separate files yet
+* [x] Kept all helpers inside `visual.ts` for now
+* [x] Confirmed packaging and visual behavior still work
+
 ---
 
 ## 🧠 Current Code Pattern
 
-The current `visual.ts` structure supports controlled multi-card rendering.
+The current `visual.ts` structure supports controlled multi-card rendering and cleaner card interaction flow.
 
 Current mental model:
 
@@ -372,7 +431,15 @@ rebuildCardContainer(cardInstances) clears and rebuilds the card container
 ↓
 renderCard(cardInstance) renders each card
 ↓
-onCardClick(event, cardInstance) handles flip and Power BI selection behavior
+onCardClick(event, cardInstance) controls the click flow
+↓
+getCardElementsForClick(cardInstance) finds the clicked card elements
+↓
+handleCardFlip(cardElements) handles flip behavior if enabled
+↓
+shouldHandleCardSelection(wasFlipped, cardInstance) decides if selection should happen
+↓
+handleCardSelection(cardInstance) handles Power BI selection/filtering
 ```
 
 Important learning concept:
@@ -401,15 +468,40 @@ renderCard()                    = renders one CardInstance
 showEmptyState()                = renders empty-state text into card elements
 attachCardClickBehavior()       = attaches click handling to a card wrapper
 getCardInstanceForElements()    = finds which CardInstance belongs to clicked DOM elements
-onCardClick()                   = currently handles both flip and selection behavior
+isCardFlipEnabled()             = temporary internal gate for future optional flip behavior
+isCardSelectionEnabled()        = temporary internal gate for future optional selection behavior
+toggleCardFlip()                = toggles the flipped visual state of one card
+handleCardFlip()                = controls whether flip behavior should run
+shouldHandleCardSelection()     = decides whether the click should trigger Power BI selection
+handleCardSelection()           = performs Power BI selection/filtering behavior
+getCardElementsForClick()       = resolves which card DOM elements were clicked
+onCardClick()                   = coordinates the click flow only
 formatValue()                   = formats values using Power BI formatting
 ```
 
-Current refactor opportunity:
+Current interaction flow:
 
 ```plaintext
-onCardClick() currently does more than one job.
-Next session should split flip behavior and selection behavior into separate helpers.
+Click card
+↓
+Stop event bubbling
+↓
+Resolve card elements
+↓
+Handle flip if enabled
+↓
+If card was back-facing before the click:
+    stop here and do not change Power BI filter
+↓
+If card was front-facing and selection is enabled:
+    select, move selection, or clear selection
+```
+
+Current refactor status:
+
+```plaintext
+onCardClick() no longer directly owns all flip and selection logic.
+The helper structure is now ready for future optional flip and optional selection settings.
 ```
 
 ---
@@ -571,10 +663,10 @@ Current limitations:
 * Multi-card rendering works, but layout is still basic.
 * Selection behavior is still simple and single-select.
 * Ctrl / Meta multi-select is not handled yet.
-* Flip behavior and Power BI selection are still tied to the same click action.
+* Flip behavior and Power BI selection still share the same card click, but their logic is now separated internally.
 * Back-face click has a guard now, but the final interaction model is not yet built.
-* Flip behavior is not optional yet.
-* Selection/filtering behavior is not optional yet.
+* Flip behavior has an internal feature gate, but it is not user-configurable yet.
+* Selection/filtering behavior has an internal feature gate, but it is not user-configurable yet.
 * There are no separate click targets yet.
 * Formatting pane settings are not wired into the visual yet.
 * Card colors, gradients, typography, spacing, and borders are still hardcoded.
@@ -651,6 +743,7 @@ Current development priority:
 
 ```plaintext
 Stabilize the multi-card interaction structure first.
+Then improve multi-card layout rules.
 Then move toward formatting pane and interaction settings.
 ```
 
@@ -669,7 +762,9 @@ Back-face click filter guard
 ↓
 Split flip and selection helpers
 ↓
-Layout rules for multiple cards
+Prepare internal feature gates for flip and selection
+↓
+Improve multi-card layout rules
 ↓
 Formatting pane foundation
 ```
@@ -719,29 +814,30 @@ Stabilize controlled multi-card support while keeping every change small and tes
 
 ### Next Small Step
 
-The next development step should be a helper refactor, not a new visual feature.
+The next development step should be layout stabilization, not formatting pane yet.
 
 Recommended next direction:
 
 ```plaintext
-Phase 4.5 — Split Flip and Selection Logic Into Helpers
+Phase 4.7 — Improve Multi-Card Layout Rules
 
 Goal:
-Make onCardClick() easier to read and prepare the code for future optional flip and optional selection modes.
+Make multi-card display cleaner and more predictable while keeping the existing flip and selection behavior stable.
 
 Do:
-- Remove old global isFlipped state if still present.
-- Add toggleCardFlip() helper.
-- Add handleCardSelection() helper.
-- Simplify onCardClick().
-- Keep current behavior the same.
-- Test everything again.
+- Improve the responsive card sizing rules.
+- Keep the single-card experience stable.
+- Keep the multi-card experience stable.
+- Avoid scrollbars flashing during flip animation.
+- Keep layout changes CSS-focused where possible.
+- Test resizing carefully after every layout change.
 
 Do not:
 - Add formatting pane yet.
-- Add interaction toggles yet.
+- Add user-facing interaction toggles yet.
 - Add separate click targets yet.
-- Redesign the layout yet.
+- Redesign the whole visual.
+- Move helpers into separate files yet.
 ```
 
 ### Next Major Feature Area
@@ -764,12 +860,15 @@ Planned near-term multi-card work:
 * [x] Test click-again-to-clear behavior per card
 * [x] Add basic responsive sizing behavior for multiple cards
 * [x] Prevent back-face click from changing filter
-* [ ] Split flip and selection logic into helpers
+* [x] Split flip and selection logic into helpers
+* [x] Add internal helper gates for future optional flip and selection behavior
+* [x] Clean up `onCardClick()` so it coordinates behavior instead of doing everything directly
+* [x] Organize `visual.ts` with helper section comments
 * [ ] Decide whether one card or many cards can be flipped at the same time
 * [ ] Improve responsive layout rules for multiple cards
 * [ ] Decide scrolling behavior for many cards
-* [ ] Prepare selection/filtering as a future optional mode
-* [ ] Prepare flip behavior as a future optional mode
+* [ ] Prepare selection/filtering as a future user-facing optional mode
+* [ ] Prepare flip behavior as a future user-facing optional mode
 
 ### Near-Term Product Features
 
@@ -840,6 +939,8 @@ No temporary horizontal scrollbar during flip.
 Cards remain visible after resize.
 Cards do not disappear after resize.
 Cards do not overlap in an unexpected way.
+Single-card layout still looks good.
+Multi-card layout still looks controlled.
 ```
 
 Latest confirmed working test results:
@@ -859,6 +960,9 @@ Back value works.
 Percentage formatting works.
 Empty state works.
 Latest interaction guard works.
+Split flip and selection helpers work.
+Internal flip and selection gates work.
+Cleaned onCardClick() flow works.
 ```
 
 ---
@@ -915,6 +1019,32 @@ Power BI Custom Visual
         └── tsconfig.json
 ```
 
+Future possible structure, but not yet:
+
+```plaintext
+src/
+  visual.ts
+  cardTypes.ts
+  cardDom.ts
+  cardData.ts
+  cardInteraction.ts
+  cardFormatting.ts
+  cardLayout.ts
+```
+
+Current decision:
+
+```plaintext
+Keep helpers inside visual.ts for now.
+Only move helpers into separate files after the helper groups become stable and obvious.
+```
+
+Recommended splitting rule:
+
+```plaintext
+Do not move a helper out of visual.ts until at least 3 related helpers clearly belong together.
+```
+
 ---
 
 ## 💾 Git Workflow
@@ -937,12 +1067,27 @@ Expected clean result:
 nothing to commit, working tree clean
 ```
 
-Suggested commit message for this README update:
+Suggested commit message for this milestone:
 
 ```bash
-git add README.md
-git commit -m "Update README after multi-card interaction milestones"
+git add .
+git commit -m "Stabilize card interaction helper flow"
 git push
+```
+
+Alternative more detailed commit message:
+
+```bash
+git add .
+git commit -m "Split card flip and selection helper logic"
+git push
+```
+
+Important note:
+
+```plaintext
+Because Phase 4.5 and Phase 4.6 changes were tested before this README update,
+commit the code changes and README update together.
 ```
 
 ---
@@ -973,9 +1118,9 @@ nothing to commit, working tree clean
 Current focus:
 
 ```plaintext
-Continue Phase 4 multi-card interaction stabilization.
-The next step is Phase 4.5 — Split Flip and Selection Logic Into Helpers.
-The visual should remain stable and behavior should stay the same after the refactor.
+Continue Phase 4 multi-card stabilization.
+The next step is Phase 4.7 — Improve Multi-Card Layout Rules.
+The visual should remain stable and behavior should stay the same after layout improvements.
 ```
 
 Current status:
@@ -992,6 +1137,9 @@ Clicking a back-facing card flips it to the front without changing the filter.
 Selected border/glow feedback works.
 Values and percentage formatting work.
 Empty state works.
+Flip and selection logic are separated into helpers.
+Internal feature gates for flip and selection are prepared.
+onCardClick() is now cleaner and easier to maintain.
 ```
 
 Latest completed refactors and milestones:
@@ -1013,22 +1161,30 @@ createCardInstances() now loops through category rows.
 The visual now renders multiple cards.
 Selection behavior works across multiple cards.
 Back-face click no longer changes filter state.
+Added toggleCardFlip() helper.
+Added handleCardSelection() helper.
+Added shouldHandleCardSelection() helper.
+Added isCardFlipEnabled() helper.
+Added isCardSelectionEnabled() helper.
+Added handleCardFlip() helper.
+Added getCardElementsForClick() helper.
+Organized visual.ts with section comments.
 ```
 
 Latest known direction:
 
 ```plaintext
 Next development step:
-Phase 4.5 — Split Flip and Selection Logic Into Helpers.
+Phase 4.7 — Improve Multi-Card Layout Rules.
 
 Important:
-Do not jump into a full redesign.
+Do not jump directly into a full redesign.
 Do not build the formatting pane yet.
-Do not add optional toggles yet.
+Do not add user-facing optional toggles yet.
 Do not create separate click targets yet.
-Do not redesign the layout yet.
+Do not move helpers into separate files yet.
 
-The next step should make the existing working behavior easier to maintain by separating flip logic and selection logic into helpers.
+The next step should improve layout stability while preserving all tested interaction behavior.
 ```
 
 Long-term goal reminder:
@@ -1086,6 +1242,9 @@ Clicking a back-facing card flips it to the front without changing the filter.
 Selected border/glow feedback works.
 Values and percentage formatting work.
 Empty state works.
+Flip and selection logic are separated into helpers.
+Internal feature gates for flip and selection are prepared.
+onCardClick() is now cleaner and easier to maintain.
 
 Latest completed refactors:
 Added CardInstance interface.
@@ -1104,9 +1263,17 @@ createCardInstances() now loops through category rows.
 The visual now renders multiple cards.
 Selection behavior works across multiple cards.
 Back-face click no longer changes filter state.
+Added toggleCardFlip() helper.
+Added handleCardSelection() helper.
+Added shouldHandleCardSelection() helper.
+Added isCardFlipEnabled() helper.
+Added isCardSelectionEnabled() helper.
+Added handleCardFlip() helper.
+Added getCardElementsForClick() helper.
+Organized visual.ts with section comments.
 
 Latest known direction:
-The next step is Phase 4.5 — Split Flip and Selection Logic Into Helpers.
+The next step is Phase 4.7 — Improve Multi-Card Layout Rules.
 
 Important:
 Do not jump directly into a full redesign.
