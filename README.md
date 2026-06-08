@@ -2,11 +2,11 @@
 
 ## 📌 Project Overview
 
-Power BI Flip Card is a custom Power BI visual that creates a modern, interactive smart KPI card.
+Power BI Flip Card is a custom Power BI visual that creates a modern, interactive smart KPI card experience.
 
 The project started as a click-to-flip KPI card, but the long-term goal is bigger than a flip animation.
 
-The goal is to build a reusable, highly customizable Power BI visual that can work as:
+The goal is to build a reusable and highly customizable Power BI visual that can work as:
 
 * A simple static KPI card
 * An animated flip card
@@ -21,13 +21,11 @@ The visual should become useful in real dashboards, not just as a coding demo.
 
 ---
 
-## ⭐ Product Vision / North Star
+## ⭐ Product Vision
 
-Power BI Flip Card is a customizable smart KPI card visual for Power BI.
+Power BI Flip Card should become a customizable smart KPI card visual for Power BI.
 
-It should help report builders create modern KPI experiences without needing bookmarks, duplicate visuals, or custom code.
-
-The long-term product direction is:
+The long-term direction is:
 
 ```plaintext
 One visual.
@@ -45,7 +43,7 @@ The goal is to build a flexible KPI super-visual that can start simple and grow 
 
 ## 🧠 Product Principles
 
-This project should always follow these principles:
+This project follows these principles:
 
 * The visual should work first as a simple, stable KPI card.
 * Advanced features should be optional.
@@ -76,46 +74,6 @@ Example: whole card flips, small icon/filter area selects
 
 ---
 
-## 🧠 Learning-First Project Rule
-
-This is both a development project and a learning project.
-
-The main goal is to understand and master the code through small, tested updates.
-
-When helping with this project:
-
-* Do not rush.
-* Do not provide full-file replacements unless requested.
-* Prefer small step-by-step edits.
-* Show exactly where to edit.
-* Explain what each change does.
-* Explain why the change matters.
-* Test after every milestone.
-* Keep the visual stable after every step.
-
-Preferred teaching format:
-
-```plaintext
-Step number
-What we are changing
-Where to find it
-What exact small part to add or replace
-Why it works
-What to test before moving on
-```
-
-Important working style:
-
-* Related safe helper-only changes may be grouped together.
-* CSS-only layout changes may be grouped when they support the same purpose.
-* Avoid combining unrelated changes in one step.
-* Do not combine DOM creation, selection behavior, multi-card rendering, formatting pane, and styling all at once.
-* Do not jump into a full feature rewrite without a bridge step.
-* Prioritize learning and stability over speed.
-* README updates may be grouped at the end of a session instead of after every small commit.
-
----
-
 ## 🎯 Main Goal
 
 Create a reusable Power BI custom visual where:
@@ -139,8 +97,6 @@ Create a reusable Power BI custom visual where:
 
 The visual is currently a stable **multi-card-capable flip card visual**.
 
-It started as a single-card visual, but it now supports controlled multi-card rendering from category rows.
-
 Current tested status:
 
 ```plaintext
@@ -155,36 +111,30 @@ Clicking a back-facing card flips it to the front without changing the filter.
 Selected border/glow feedback works.
 Values and percentage formatting work.
 Empty state works.
-Helper bridge before multi-card rendering works.
-Controlled multi-card rendering works.
-Improved multi-card selection behavior works.
-Back-face click filter guard works.
-Flip logic and selection logic are now split into helpers.
+Flip and selection logic are separated into helpers.
 Internal feature gates for flip and selection are prepared.
-Card click flow is cleaner and easier to maintain.
-visual.ts is now organized with section comments.
+visual.ts helper sections are organized.
 ```
 
 Current development stage:
 
 ```plaintext
-Phase 4 — Multi-card preparation and interaction stabilization
+Phase 4 — Multi-card interaction stabilization
 ```
 
 Current focus:
 
 ```plaintext
-Stabilize the multi-card interaction structure while keeping the visual simple and tested.
+Improve multi-card layout rules while keeping all existing flip and selection behavior stable.
 ```
 
 Current important status:
 
 ```plaintext
-The visual now renders multiple CardInstance objects when multiple category rows are available.
-Flip behavior and selection behavior have been separated into helper methods.
-Internal feature gates now prepare the visual for future optional flip and optional selection settings.
-The next step is not the formatting pane yet.
-The next step is to improve multi-card layout rules safely.
+The visual can now render multiple CardInstance objects from category rows.
+The click flow is cleaner and separated into helper methods.
+The code is prepared for future optional flip and optional selection settings.
+The next step is layout stabilization, not formatting pane yet.
 ```
 
 ---
@@ -225,185 +175,6 @@ Front value: 16.63K
 
 ---
 
-## 🏁 Completed Milestones Summary
-
-### Phase 1 — Foundation
-
-* [x] Installed Node.js
-* [x] Installed Power BI Visual SDK
-* [x] Created Power BI custom visual project
-* [x] Created GitHub repository
-* [x] Added `.gitignore`
-* [x] Removed build artifacts from Git tracking
-* [x] Built `.pbiviz` package successfully
-* [x] Tested first custom visual in Power BI Desktop
-
-### Phase 2 — Flip Card UI
-
-* [x] Created front and back card faces
-* [x] Added LESS/CSS styling
-* [x] Added click interaction
-* [x] Added smooth flip animation
-* [x] Tested flip behavior in Power BI Desktop
-
-### Phase 3 — Power BI Data Integration
-
-* [x] Added `Card Label`
-* [x] Added `Card Value`
-* [x] Added `Detail Value`
-* [x] Read dynamic Power BI category labels
-* [x] Read dynamic Power BI measure values
-* [x] Display front and back values dynamically
-* [x] Respect Power BI measure formatting
-* [x] Support percentage formatting such as `85.8%` instead of `0.858`
-* [x] Add Power BI selection behavior
-* [x] Add click-again-to-clear behavior
-* [x] Add selected card border/glow feedback
-* [x] Add empty state when required fields are missing
-
-### Phase 3.5 — Single-Card Refactor
-
-* [x] Added `CardData` interface
-* [x] Added `getCardDataForRow()` helper
-* [x] Added `renderCard()` helper
-* [x] Added `resizeCard()` helper
-* [x] Added `clearSelectionState()` helper
-* [x] Shortened `update()` so it controls the flow instead of doing everything directly
-* [x] Moved row-based logic into helper functions
-* [x] Tested after each refactor and confirmed the visual still works
-
-### Phase 4 — Multi-Card Preparation
-
-* [x] Introduced `rowIndex` concept
-* [x] Updated category label, value, and selection ID logic to use `rowIndex`
-* [x] Added `getCategoryRowCount()` helper
-* [x] Added `cardContainer` wrapper
-* [x] Added flex-ready `.flip-card-container` styling
-* [x] Added `CardDomElements` interface
-* [x] Added `createCardElements()` helper
-* [x] Moved card DOM creation out of the constructor
-* [x] Grouped single-card DOM references into `this.cardElements`
-* [x] Added `CardInstance` interface
-* [x] Added `createCardInstance()` helper
-* [x] Added `createCardInstanceForRow()` helper
-* [x] Added `createCardInstances()` helper
-* [x] Replaced `currentCardInstance` with `cardInstances: CardInstance[]`
-* [x] Updated `renderCard()` to accept a full `CardInstance`
-* [x] Updated `onCardClick()` to accept a full `CardInstance`
-* [x] Removed duplicate `currentSelectionId` state
-* [x] Confirmed resize, flip, filtering, clear-selection, selected glow, formatting, and empty state still work
-
-### Phase 4.1 — Helper Bridge Before Multi-Card Rendering
-
-* [x] Cleaned and organized the current single-card helper flow
-* [x] Added `attachCardClickBehavior()` helper
-* [x] Added `getCardInstanceForElements()` helper
-* [x] Added `rebuildCardContainer()` helper
-* [x] Updated the constructor to attach click behavior through a helper
-* [x] Updated `update()` to rebuild the card container after creating card instances
-* [x] Kept the visual stable as a single-card visual
-* [x] Confirmed the visual still renders only `cardInstances[0]`
-* [x] Tested flip, resize, selection, click-again-to-clear, selected glow, formatting, and empty state
-* [x] Committed the tested milestone to Git
-
-### Phase 4.2 — Controlled Multi-Card Rendering
-
-* [x] Updated `resizeCard()` so the container owns the visual size
-* [x] Updated `createCardInstances()` to loop through category rows
-* [x] Created one `CardData` object per row
-* [x] Created fresh `CardDomElements` for additional rows
-* [x] Created one `CardInstance` per visible category row
-* [x] Attached click behavior to each generated card
-* [x] Updated `rebuildCardContainer()` to append all card wrappers
-* [x] Updated `update()` to render every card instance
-* [x] Added minimal multi-card CSS sizing
-* [x] Confirmed multiple cards appear correctly
-* [x] Confirmed each card shows the correct label, front value, and back value
-* [x] Confirmed each card can flip
-* [x] Confirmed Power BI filtering still works
-* [x] Confirmed click-again-to-clear still works
-* [x] Confirmed resize, formatting, selected glow, and empty state still work
-* [x] Committed the tested milestone to Git
-
-### Phase 4.3 — Clean Multi-Card Selection Behavior
-
-* [x] Updated selection behavior for multiple cards
-* [x] Clicking an unselected card selects that card
-* [x] Clicking a different card moves selection to that card
-* [x] Clicking the selected card again clears selection
-* [x] Updated selected glow behavior so stale selected borders are cleared
-* [x] Kept selection behavior simple and single-select for now
-* [x] Confirmed Power BI filtering moves correctly between cards
-* [x] Confirmed selected glow appears and clears correctly
-* [x] Confirmed flip, formatting, empty state, and resize still work
-* [x] Committed the tested milestone to Git
-
-### Phase 4.4 — Back-Face Click Filter Guard
-
-* [x] Identified interaction issue where flip and filter were sharing the same click action
-* [x] Added a guard so clicking a back-facing card only flips it to the front
-* [x] Prevented back-face clicks from changing Power BI filter state
-* [x] Preserved front-face click behavior for filtering
-* [x] Confirmed front-face click can still select/filter
-* [x] Confirmed selected front-facing card can still clear selection
-* [x] Confirmed back-face click returns the card to the front while keeping the filter unchanged
-* [x] Confirmed multi-card rendering, selected glow, formatting, empty state, and resize still work
-* [x] Committed the tested milestone to Git
-
-### Phase 4.5 — Split Flip and Selection Logic Into Helpers
-
-* [x] Split flip behavior away from direct `onCardClick()` logic
-* [x] Added `toggleCardFlip()` helper
-* [x] Added `handleCardSelection()` helper
-* [x] Added `shouldHandleCardSelection()` helper
-* [x] Simplified `onCardClick()` so it controls the interaction flow instead of doing all logic directly
-* [x] Preserved front-facing card selection behavior
-* [x] Preserved click-again-to-clear behavior
-* [x] Preserved back-face click guard behavior
-* [x] Confirmed single-card visual still works
-* [x] Confirmed multi-card visual still works
-* [x] Confirmed resize, flip, filtering, selected glow, formatting, and empty state still work
-
-### Phase 4.6A — Internal Feature Gates for Flip and Selection
-
-* [x] Added `isCardFlipEnabled()` helper
-* [x] Added `isCardSelectionEnabled()` helper
-* [x] Updated selection decision logic to check whether card selection is enabled
-* [x] Prepared the code for future formatting pane interaction toggles
-* [x] Kept both helpers returning `true` for now
-* [x] Confirmed there is no visible behavior change
-* [x] Confirmed all existing interaction tests still pass
-
-### Phase 4.6B — Move Flip Handling Into One Helper
-
-* [x] Added `handleCardFlip()` helper
-* [x] Moved flip-enabled checking out of `onCardClick()`
-* [x] Kept `toggleCardFlip()` focused only on toggling the flipped CSS class
-* [x] Made `onCardClick()` easier to read
-* [x] Confirmed there is no visible behavior change
-* [x] Confirmed all existing interaction tests still pass
-
-### Phase 4.6C — Move Card Element Resolution Into a Helper
-
-* [x] Added `getCardElementsForClick()` helper
-* [x] Moved card element lookup out of `onCardClick()`
-* [x] Preserved fallback support for the original single-card `this.cardElements`
-* [x] Made `onCardClick()` focus only on the click flow
-* [x] Confirmed single-card and multi-card behavior still work
-* [x] Confirmed all existing interaction tests still pass
-
-### Phase 4.6D — Organize `visual.ts` With Section Comments
-
-* [x] Added section comments for card types
-* [x] Added section comments for card creation helpers
-* [x] Added section comments for card rendering helpers
-* [x] Added section comments for card interaction helpers
-* [x] Improved readability without moving code into separate files yet
-* [x] Kept all helpers inside `visual.ts` for now
-* [x] Confirmed packaging and visual behavior still work
-
----
-
 ## 🧠 Current Code Pattern
 
 The current `visual.ts` structure supports controlled multi-card rendering and cleaner card interaction flow.
@@ -421,25 +192,24 @@ getCategoryRowCount() checks available category rows
 ↓
 createCardInstances(dataView, rowCount) creates the card instance list
 ↓
-For each row:
-    getCardDataForRow() creates card data
-    createCardElements() creates card DOM elements for additional rows
-    createCardInstanceForRow() groups data + DOM
-    attachCardClickBehavior() attaches click behavior
-↓
 rebuildCardContainer(cardInstances) clears and rebuilds the card container
 ↓
 renderCard(cardInstance) renders each card
 ↓
 onCardClick(event, cardInstance) controls the click flow
-↓
-getCardElementsForClick(cardInstance) finds the clicked card elements
-↓
-handleCardFlip(cardElements) handles flip behavior if enabled
-↓
-shouldHandleCardSelection(wasFlipped, cardInstance) decides if selection should happen
-↓
-handleCardSelection(cardInstance) handles Power BI selection/filtering
+```
+
+Main helper groups inside `visual.ts`:
+
+```plaintext
+Card types
+Constructor and update flow
+Layout and state helpers
+Data preparation helpers
+Card creation helpers
+Card rendering helpers
+Card interaction helpers
+Power BI lookup and formatting helpers
 ```
 
 Important learning concept:
@@ -448,69 +218,11 @@ Important learning concept:
 One function should have one main job.
 ```
 
-Current helper roles:
-
-```plaintext
-resizeCard()                    = sizes the visual container from Power BI viewport
-clearSelectionState()           = removes selected visual state from all cards
-getCategoryRowCount()           = counts how many category rows Power BI provided
-getCardDataForRow()             = prepares card information for one row index
-getCategoryLabel()              = gets the category label for one row index
-getValueAtRow()                 = gets a measure value for one row index
-createCategorySelectionId()     = creates Power BI selection ID for one row index
-createCardElements()            = builds the DOM structure for one flip card
-createTextElement()             = creates a reusable text div
-createCardInstance()            = groups CardData + CardDomElements
-createCardInstanceForRow()      = creates one CardInstance for one row
-createCardInstances()           = creates the list of CardInstances
-rebuildCardContainer()          = clears and rebuilds the card container
-renderCard()                    = renders one CardInstance
-showEmptyState()                = renders empty-state text into card elements
-attachCardClickBehavior()       = attaches click handling to a card wrapper
-getCardInstanceForElements()    = finds which CardInstance belongs to clicked DOM elements
-isCardFlipEnabled()             = temporary internal gate for future optional flip behavior
-isCardSelectionEnabled()        = temporary internal gate for future optional selection behavior
-toggleCardFlip()                = toggles the flipped visual state of one card
-handleCardFlip()                = controls whether flip behavior should run
-shouldHandleCardSelection()     = decides whether the click should trigger Power BI selection
-handleCardSelection()           = performs Power BI selection/filtering behavior
-getCardElementsForClick()       = resolves which card DOM elements were clicked
-onCardClick()                   = coordinates the click flow only
-formatValue()                   = formats values using Power BI formatting
-```
-
-Current interaction flow:
-
-```plaintext
-Click card
-↓
-Stop event bubbling
-↓
-Resolve card elements
-↓
-Handle flip if enabled
-↓
-If card was back-facing before the click:
-    stop here and do not change Power BI filter
-↓
-If card was front-facing and selection is enabled:
-    select, move selection, or clear selection
-```
-
-Current refactor status:
-
-```plaintext
-onCardClick() no longer directly owns all flip and selection logic.
-The helper structure is now ready for future optional flip and optional selection settings.
-```
-
 ---
 
 ## 🧱 Current DOM Structure
 
-The visual can now render multiple cards inside a container.
-
-Current multi-card structure:
+The visual can render multiple cards inside a container.
 
 ```plaintext
 target
@@ -523,24 +235,10 @@ target
     │   └── flip-card-inner
     │       ├── flip-card-front
     │       └── flip-card-back
-    ├── flip-card-wrapper
-    │   └── flip-card-inner
-    │       ├── flip-card-front
-    │       └── flip-card-back
     └── ...
 ```
 
 The number of cards depends on category rows from Power BI.
-
-Example:
-
-```plaintext
-rowIndex 0 → HGS
-rowIndex 1 → Vendor A
-rowIndex 2 → Vendor B
-rowIndex 3 → Vendor C
-rowIndex 4 → Vendor D
-```
 
 ---
 
@@ -598,18 +296,9 @@ Current storage:
 this.cardInstances: CardInstance[]
 ```
 
-Current behavior:
-
-```plaintext
-this.cardInstances[0] = row 0 card
-this.cardInstances[1] = row 1 card
-this.cardInstances[2] = row 2 card
-this.cardInstances[3] = row 3 card
-```
-
 ---
 
-## 🎨 Current Layout CSS Direction
+## 🎨 Current Layout Direction
 
 The card container is prepared for multiple cards.
 
@@ -664,7 +353,6 @@ Current limitations:
 * Selection behavior is still simple and single-select.
 * Ctrl / Meta multi-select is not handled yet.
 * Flip behavior and Power BI selection still share the same card click, but their logic is now separated internally.
-* Back-face click has a guard now, but the final interaction model is not yet built.
 * Flip behavior has an internal feature gate, but it is not user-configurable yet.
 * Selection/filtering behavior has an internal feature gate, but it is not user-configurable yet.
 * There are no separate click targets yet.
@@ -688,11 +376,9 @@ They are the roadmap.
 
 ---
 
-## 🔎 Research-Informed Product Strategy
+## 🧭 Product Roadmap
 
-The product should not compete only as a flip animation.
-
-The stronger direction is to become a mode-based KPI super-visual.
+The stronger product direction is to become a mode-based KPI super-visual.
 
 Target modes:
 
@@ -704,27 +390,7 @@ Mode 4: KPI Comparison / State Card
 Mode 5: Dashboard Filtering Card
 ```
 
-Every major capability should become optional and controlled by settings.
-
-Examples:
-
-```plaintext
-Flip: On / Off
-Selection: On / Off
-Multi-card: On / Off
-Trend: On / Off
-Status chip: On / Off
-Back face: On / Off
-Tooltip: On / Off
-```
-
-This keeps the visual flexible and avoids turning the project into many separate visuals.
-
----
-
-## 🧭 Product Priority Stack
-
-The long-term priority stack is:
+Long-term priority stack:
 
 ```plaintext
 1. Proper formatting pane integration
@@ -739,35 +405,91 @@ The long-term priority stack is:
 10. Packaging, sample report, release, and certification preparation
 ```
 
-Current development priority:
+Immediate development path:
 
 ```plaintext
-Stabilize the multi-card interaction structure first.
-Then improve multi-card layout rules.
-Then move toward formatting pane and interaction settings.
-```
-
-This means the immediate code path is:
-
-```plaintext
-Single-card stable
-↓
-Multi-card preparation
-↓
-Controlled multi-card rendering
-↓
-Multi-card selection and flip testing
-↓
-Back-face click filter guard
-↓
-Split flip and selection helpers
-↓
-Prepare internal feature gates for flip and selection
-↓
 Improve multi-card layout rules
 ↓
 Formatting pane foundation
+↓
+Optional flip setting
+↓
+Optional selection/filter setting
+↓
+Additional KPI customization features
 ```
+
+---
+
+## 🚧 Current Development Focus
+
+### Phase 4.7 — Improve Multi-Card Layout Rules
+
+Goal:
+
+```plaintext
+Make multi-card display cleaner and more predictable while keeping the existing flip and selection behavior stable.
+```
+
+Do:
+
+* Improve responsive card sizing rules.
+* Keep the single-card experience stable.
+* Keep the multi-card experience stable.
+* Avoid scrollbars flashing during flip animation.
+* Keep layout changes CSS-focused where possible.
+* Test resizing carefully after every layout change.
+
+Do not:
+
+* Do not add formatting pane yet.
+* Do not add user-facing interaction toggles yet.
+* Do not add separate click targets yet.
+* Do not redesign the whole visual.
+* Do not move helpers into separate files yet.
+
+---
+
+## 🧩 Future Product Features
+
+Near-term:
+
+* [ ] Improve responsive layout rules for multiple cards
+* [ ] Decide scrolling behavior for many cards
+* [ ] Decide whether one card or many cards can be flipped at the same time
+* [ ] Add formatting pane foundation
+* [ ] Add normal card / flip card toggle
+* [ ] Add single-card / multi-card toggle
+* [ ] Add selection/filtering toggle
+* [ ] Separate flip interaction from selection interaction
+* [ ] Add front card color settings
+* [ ] Add back card color settings
+* [ ] Add typography settings
+* [ ] Add border settings
+* [ ] Add shadow settings
+* [ ] Add animation speed setting
+* [ ] Add label visibility toggle
+* [ ] Add subtitle visibility toggle
+
+Later:
+
+* [ ] Tooltip support
+* [ ] Context menu support
+* [ ] Conditional formatting
+* [ ] Status chips
+* [ ] Icons or status indicators
+* [ ] Target value
+* [ ] Prior period value
+* [ ] Variance display
+* [ ] Mini sparkline or trend strip
+* [ ] Theme-aware colors
+* [ ] High contrast support
+* [ ] Keyboard navigation
+* [ ] Localization support
+* [ ] Mobile-friendly layout
+* [ ] Sample PBIX report
+* [ ] Release notes
+* [ ] AppSource/certification-readiness cleanup
 
 ---
 
@@ -801,169 +523,6 @@ Owner or business definition
 ```
 
 This is the future direction, not the current implemented state.
-
----
-
-## 🚧 Development Roadmap
-
-### Current Focus
-
-```plaintext
-Stabilize controlled multi-card support while keeping every change small and tested.
-```
-
-### Next Small Step
-
-The next development step should be layout stabilization, not formatting pane yet.
-
-Recommended next direction:
-
-```plaintext
-Phase 4.7 — Improve Multi-Card Layout Rules
-
-Goal:
-Make multi-card display cleaner and more predictable while keeping the existing flip and selection behavior stable.
-
-Do:
-- Improve the responsive card sizing rules.
-- Keep the single-card experience stable.
-- Keep the multi-card experience stable.
-- Avoid scrollbars flashing during flip animation.
-- Keep layout changes CSS-focused where possible.
-- Test resizing carefully after every layout change.
-
-Do not:
-- Add formatting pane yet.
-- Add user-facing interaction toggles yet.
-- Add separate click targets yet.
-- Redesign the whole visual.
-- Move helpers into separate files yet.
-```
-
-### Next Major Feature Area
-
-```plaintext
-Multi-card layout and interaction foundation
-```
-
-Planned near-term multi-card work:
-
-* [x] Update `createCardInstances()` to loop through category rows
-* [x] Create one `CardData` object per row
-* [x] Create one `CardDomElements` object per row
-* [x] Create one `CardInstance` per row
-* [x] Attach click behavior per card
-* [x] Append each card wrapper into `.flip-card-container`
-* [x] Render each card instance
-* [x] Test flip behavior per card
-* [x] Test Power BI selection per card
-* [x] Test click-again-to-clear behavior per card
-* [x] Add basic responsive sizing behavior for multiple cards
-* [x] Prevent back-face click from changing filter
-* [x] Split flip and selection logic into helpers
-* [x] Add internal helper gates for future optional flip and selection behavior
-* [x] Clean up `onCardClick()` so it coordinates behavior instead of doing everything directly
-* [x] Organize `visual.ts` with helper section comments
-* [ ] Decide whether one card or many cards can be flipped at the same time
-* [ ] Improve responsive layout rules for multiple cards
-* [ ] Decide scrolling behavior for many cards
-* [ ] Prepare selection/filtering as a future user-facing optional mode
-* [ ] Prepare flip behavior as a future user-facing optional mode
-
-### Near-Term Product Features
-
-After basic multi-card support is stable:
-
-* [ ] Add formatting pane foundation
-* [ ] Add normal card / flip card toggle
-* [ ] Add single-card / multi-card toggle
-* [ ] Add selection/filtering toggle
-* [ ] Separate flip interaction from selection interaction
-* [ ] Add front card color settings
-* [ ] Add back card color settings
-* [ ] Add typography settings
-* [ ] Add border settings
-* [ ] Add shadow settings
-* [ ] Add animation speed setting
-* [ ] Add label visibility toggle
-* [ ] Add subtitle visibility toggle
-
-### Later Product Features
-
-* [ ] Tooltip support
-* [ ] Context menu support
-* [ ] Conditional formatting
-* [ ] Status chips
-* [ ] Icons or status indicators
-* [ ] Target value
-* [ ] Prior period value
-* [ ] Variance display
-* [ ] Mini sparkline or trend strip
-* [ ] Theme-aware colors
-* [ ] High contrast support
-* [ ] Keyboard navigation
-* [ ] Localization support
-* [ ] Mobile-friendly layout
-* [ ] Sample PBIX report
-* [ ] Release notes
-* [ ] AppSource/certification-readiness cleanup
-
----
-
-## 🧪 Current Test Checklist
-
-After each change, test:
-
-```plaintext
-Card still fills the visual area in single-card mode.
-Multiple cards still appear in multi-card mode.
-Each card shows the correct label.
-Each card shows the correct front value.
-Each card shows the correct back value.
-Cards still flip.
-Power BI selection still works.
-Clicking a different card moves the selection.
-Clicking the selected front-facing card again clears selection.
-Clicking a back-facing card returns it to the front without changing the filter.
-Selected border/glow feedback still works.
-Values and percentage formatting still work.
-Empty state still works.
-Resize the visual smaller and bigger.
-```
-
-For layout or container changes, also test:
-
-```plaintext
-No temporary vertical scrollbar during flip.
-No temporary horizontal scrollbar during flip.
-Cards remain visible after resize.
-Cards do not disappear after resize.
-Cards do not overlap in an unexpected way.
-Single-card layout still looks good.
-Multi-card layout still looks controlled.
-```
-
-Latest confirmed working test results:
-
-```plaintext
-Single-card visual works.
-Multi-card visual works.
-Card resizes correctly.
-Cards flip correctly.
-Power BI filtering works when a front-facing card is clicked.
-Clicking another card moves the filter to that card.
-Clicking the selected front-facing card again clears selection.
-Clicking a back-facing card flips it to the front without changing the filter.
-Selected border/glow feedback works.
-Front value works.
-Back value works.
-Percentage formatting works.
-Empty state works.
-Latest interaction guard works.
-Split flip and selection helpers work.
-Internal flip and selection gates work.
-Cleaned onCardClick() flow works.
-```
 
 ---
 
@@ -1005,6 +564,8 @@ Power BI Custom Visual
     │
     ├── README.md
     ├── .gitignore
+    ├── docs
+    │   └── DEVELOPMENT_LOG.md
     │
     └── flipCardVisual
         ├── assets
@@ -1019,7 +580,7 @@ Power BI Custom Visual
         └── tsconfig.json
 ```
 
-Future possible structure, but not yet:
+Possible future structure:
 
 ```plaintext
 src/
@@ -1039,10 +600,29 @@ Keep helpers inside visual.ts for now.
 Only move helpers into separate files after the helper groups become stable and obvious.
 ```
 
-Recommended splitting rule:
+---
+
+## 📝 Documentation Strategy
+
+Use this documentation structure:
 
 ```plaintext
-Do not move a helper out of visual.ts until at least 3 related helpers clearly belong together.
+README.md                = public-facing project overview, current status, roadmap, and build notes
+docs/DEVELOPMENT_LOG.md  = detailed phase history, learning notes, test results, and next session starting point
+CHANGELOG.md             = future version/release notes only
+```
+
+Update cadence:
+
+```plaintext
+During coding:
+- Keep README unchanged unless the project direction changes.
+- Keep DEVELOPMENT_LOG unchanged unless a milestone is completed.
+
+End of session:
+- Update README with current high-level status and roadmap if needed.
+- Update DEVELOPMENT_LOG with detailed changes and test results.
+- Commit both together if both changed.
 ```
 
 ---
@@ -1065,222 +645,6 @@ Expected clean result:
 
 ```plaintext
 nothing to commit, working tree clean
-```
-
-Suggested commit message for this milestone:
-
-```bash
-git add .
-git commit -m "Stabilize card interaction helper flow"
-git push
-```
-
-Alternative more detailed commit message:
-
-```bash
-git add .
-git commit -m "Split card flip and selection helper logic"
-git push
-```
-
-Important note:
-
-```plaintext
-Because Phase 4.5 and Phase 4.6 changes were tested before this README update,
-commit the code changes and README update together.
-```
-
----
-
-## 📍 Next Session Starting Point
-
-When continuing this project, first inspect:
-
-```plaintext
-flipCardVisual/src/visual.ts
-flipCardVisual/capabilities.json
-flipCardVisual/style/visual.less
-README.md
-```
-
-Then confirm:
-
-```bash
-git status
-```
-
-Expected:
-
-```plaintext
-nothing to commit, working tree clean
-```
-
-Current focus:
-
-```plaintext
-Continue Phase 4 multi-card stabilization.
-The next step is Phase 4.7 — Improve Multi-Card Layout Rules.
-The visual should remain stable and behavior should stay the same after layout improvements.
-```
-
-Current status:
-
-```plaintext
-Single-card visual works.
-Multi-card visual works.
-Card resizes correctly.
-Cards flip correctly.
-Power BI filtering works when a front-facing card is clicked.
-Clicking another card moves the filter to that card.
-Clicking the selected front-facing card again clears selection.
-Clicking a back-facing card flips it to the front without changing the filter.
-Selected border/glow feedback works.
-Values and percentage formatting work.
-Empty state works.
-Flip and selection logic are separated into helpers.
-Internal feature gates for flip and selection are prepared.
-onCardClick() is now cleaner and easier to maintain.
-```
-
-Latest completed refactors and milestones:
-
-```plaintext
-Added CardInstance interface.
-Added createCardInstance() helper.
-Added createCardInstanceForRow() helper.
-Added createCardInstances() helper.
-Changed currentCardInstance into cardInstances array.
-Removed duplicate currentSelectionId state.
-Updated renderCard() to accept CardInstance.
-Updated onCardClick() to accept CardInstance.
-Added attachCardClickBehavior() helper.
-Added getCardInstanceForElements() helper.
-Added rebuildCardContainer() helper.
-update() now creates cardInstances and rebuilds the card container.
-createCardInstances() now loops through category rows.
-The visual now renders multiple cards.
-Selection behavior works across multiple cards.
-Back-face click no longer changes filter state.
-Added toggleCardFlip() helper.
-Added handleCardSelection() helper.
-Added shouldHandleCardSelection() helper.
-Added isCardFlipEnabled() helper.
-Added isCardSelectionEnabled() helper.
-Added handleCardFlip() helper.
-Added getCardElementsForClick() helper.
-Organized visual.ts with section comments.
-```
-
-Latest known direction:
-
-```plaintext
-Next development step:
-Phase 4.7 — Improve Multi-Card Layout Rules.
-
-Important:
-Do not jump directly into a full redesign.
-Do not build the formatting pane yet.
-Do not add user-facing optional toggles yet.
-Do not create separate click targets yet.
-Do not move helpers into separate files yet.
-
-The next step should improve layout stability while preserving all tested interaction behavior.
-```
-
-Long-term goal reminder:
-
-```plaintext
-Power BI Flip Card should become a flexible one-stop-shop smart KPI card visual.
-It should not remain only a flip animation.
-Flip behavior and selection/filtering behavior should eventually become separate optional features.
-```
-
----
-
-## 🟢 Best Prompt to Start a New ChatGPT Session
-
-Use this prompt when starting a new session:
-
-```plaintext
-Here is my GitHub repo:
-
-https://github.com/RonanVergara/PowerBI-FlipCard
-
-Please read the README and current code first before suggesting changes.
-
-Important:
-This is a learning-first project.
-Do not rush.
-Do not give me full-file replacement unless I ask.
-Teach me step by step.
-For every change, show:
-1. Where to find the code
-2. What exact small part to add or replace
-3. Why it works
-4. What to test before moving on
-
-Product vision:
-Power BI Flip Card is a customizable smart KPI card visual for Power BI.
-
-It can work as a simple static card, an animated flip card, or a multi-card interactive grid. Users can turn features on or off through the formatting pane, allowing the same visual to support simple KPI displays, detailed drill-style cards, category-based card grids, and interactive dashboard filtering without using bookmarks.
-
-Current goal:
-Continue from the README’s “Next Session Starting Point.”
-
-Current phase:
-We are stabilizing controlled multi-card support, but the visual should still remain stable until each small step is tested.
-
-Current tested status:
-Single-card visual works.
-Multi-card visual works.
-Card resizes correctly.
-Cards flip correctly.
-Power BI filtering works when a front-facing card is clicked.
-Clicking another card moves the filter to that card.
-Clicking the selected front-facing card again clears selection.
-Clicking a back-facing card flips it to the front without changing the filter.
-Selected border/glow feedback works.
-Values and percentage formatting work.
-Empty state works.
-Flip and selection logic are separated into helpers.
-Internal feature gates for flip and selection are prepared.
-onCardClick() is now cleaner and easier to maintain.
-
-Latest completed refactors:
-Added CardInstance interface.
-Added createCardInstance() helper.
-Added createCardInstanceForRow() helper.
-Added createCardInstances() helper.
-Changed currentCardInstance into cardInstances array.
-Removed duplicate currentSelectionId state.
-Updated renderCard() to accept CardInstance.
-Updated onCardClick() to accept CardInstance.
-Added attachCardClickBehavior() helper.
-Added getCardInstanceForElements() helper.
-Added rebuildCardContainer() helper.
-update() now creates cardInstances and rebuilds the card container.
-createCardInstances() now loops through category rows.
-The visual now renders multiple cards.
-Selection behavior works across multiple cards.
-Back-face click no longer changes filter state.
-Added toggleCardFlip() helper.
-Added handleCardSelection() helper.
-Added shouldHandleCardSelection() helper.
-Added isCardFlipEnabled() helper.
-Added isCardSelectionEnabled() helper.
-Added handleCardFlip() helper.
-Added getCardElementsForClick() helper.
-Organized visual.ts with section comments.
-
-Latest known direction:
-The next step is Phase 4.7 — Improve Multi-Card Layout Rules.
-
-Important:
-Do not jump directly into a full redesign.
-Do not combine unrelated changes like formatting pane, selection-state redesign, click target redesign, and layout redesign in one big step.
-The next steps should still keep the visual stable.
-Always remember the long-term goal: this should become a flexible one-stop-shop smart KPI card visual, not only a flip card.
-Future rule: flip behavior and selection/filtering behavior should become separate optional features.
 ```
 
 ---
