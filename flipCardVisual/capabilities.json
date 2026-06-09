@@ -55,5 +55,15 @@
             }
         }
     ],
-    "objects": {}
+    "objects": {
+        "interactions": {
+            "properties": {
+                "enableFlip": {
+                    "type": {
+                        "bool": true
+                    }
+                }
+            }
+        }
+    }
 }

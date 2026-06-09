@@ -2,6 +2,8 @@
 
 import powerbi from "powerbi-visuals-api";
 import { valueFormatter } from "powerbi-visuals-utils-formattingutils";
+import { FormattingSettingsService } from "powerbi-visuals-utils-formattingmodel";
+import { VisualFormattingSettingsModel } from "./settings";
 import "./../style/visual.less";
 
 import DataView = powerbi.DataView;
@@ -54,6 +56,9 @@ export class Visual implements IVisual {
     private readonly host: IVisualHost;
     private readonly selectionManager: ISelectionManager;
 
+    private formattingSettings: VisualFormattingSettingsModel;
+    private formattingSettingsService: FormattingSettingsService;
+
     private readonly cardContainer: HTMLDivElement;
     private readonly cardElements: CardDomElements;
 
@@ -64,6 +69,8 @@ export class Visual implements IVisual {
         this.target = options.element;
         this.host = options.host;
         this.selectionManager = this.host.createSelectionManager();
+        this.formattingSettingsService = new FormattingSettingsService();
+        this.formattingSettings = new VisualFormattingSettingsModel();
         this.target.classList.add("flip-card-visual-root");
 
         this.cardContainer = document.createElement("div");
@@ -371,7 +378,7 @@ export class Visual implements IVisual {
     }
 
     private isCardFlipEnabled(): boolean {
-        return true;
+        return this.formattingSettings.interactionsCard.enableFlip.value;
     }
 
     private isCardSelectionEnabled(): boolean {
