@@ -1,558 +1,394 @@
 "use strict";
 
 import powerbi from "powerbi-visuals-api";
-import { valueFormatter } from "powerbi-visuals-utils-formattingutils";
+import { select as d3Select } from "d3-selection";
 import { FormattingSettingsService } from "powerbi-visuals-utils-formattingmodel";
-import { VisualFormattingSettingsModel } from "./settings";
-import "./../style/visual.less";
+import {
+    createTooltipServiceWrapper,
+    ITooltipServiceWrapper,
+} from "powerbi-visuals-utils-tooltiputils";
 
 import DataView = powerbi.DataView;
-import DataViewCategoryColumn = powerbi.DataViewCategoryColumn;
-import DataViewValueColumn = powerbi.DataViewValueColumn;
 import ISelectionId = powerbi.visuals.ISelectionId;
+import HostSelectionId = powerbi.extensibility.ISelectionId;
 import ISelectionManager = powerbi.extensibility.ISelectionManager;
 import IVisual = powerbi.extensibility.visual.IVisual;
+import IVisualEventService = powerbi.extensibility.IVisualEventService;
 import IVisualHost = powerbi.extensibility.visual.IVisualHost;
 import VisualConstructorOptions = powerbi.extensibility.visual.VisualConstructorOptions;
 import VisualUpdateOptions = powerbi.extensibility.visual.VisualUpdateOptions;
 
-// -----------------------------
-// Card types
-// -----------------------------
+import "./../style/visual.less";
 
-interface CardData {
-    label: string;
-    frontTitle: string;
-    frontValue: string;
-    frontSubtitle: string;
-    backTitle: string;
-    backValue: string;
-    backSubtitle: string;
-    selectionId: ISelectionId | undefined;
-}
-
-interface CardDomElements {
-    wrapper: HTMLDivElement;
-    inner: HTMLDivElement;
-
-    frontLabel: HTMLDivElement;
-    frontTitle: HTMLDivElement;
-    frontValue: HTMLDivElement;
-    frontSubtitle: HTMLDivElement;
-
-    backLabel: HTMLDivElement;
-    backTitle: HTMLDivElement;
-    backValue: HTMLDivElement;
-    backSubtitle: HTMLDivElement;
-}
+import { extractDataView } from "./data";
+import { CardElements, createCardElements, renderCard, updateCardFace } from "./renderer";
+import {
+    getDecimalPrecision,
+    getEnumSettingValue,
+    VisualFormattingSettingsModel,
+} from "./settings";
+import {
+    CardFace,
+    CardViewModel,
+    DataExtractionResult,
+    KpiDirection,
+    VarianceMode,
+    VisualDataState,
+} from "./types";
+import {
+    getVarianceDisplayText,
+    prepareTooltipItems,
+} from "./valueFormatting";
 
 interface CardInstance {
-    data: CardData;
-    elements: CardDomElements;
+    face: CardFace;
+    readonly elements: CardElements;
+    model: CardViewModel;
+}
+
+function enumValue<T extends string>(value: string): T {
+    return value as T;
+}
+
+function numericSetting(value: powerbi.EnumMemberValue): number {
+    return typeof value === "number" ? value : Number(value) || 0;
 }
 
 export class Visual implements IVisual {
     private readonly target: HTMLElement;
     private readonly host: IVisualHost;
+    private readonly events: IVisualEventService;
     private readonly selectionManager: ISelectionManager;
-
-    private formattingSettings: VisualFormattingSettingsModel;
-    private formattingSettingsService: FormattingSettingsService;
-
+    private readonly tooltipServiceWrapper: ITooltipServiceWrapper;
+    private readonly formattingSettingsService: FormattingSettingsService;
     private readonly cardContainer: HTMLDivElement;
-    private readonly cardElements: CardDomElements;
+    private readonly cardInstances = new Map<string, CardInstance>();
+    private formattingSettings = new VisualFormattingSettingsModel();
+    private previousDefaultFace: CardFace = "front";
+    private hasUpdated = false;
+    private destroyed = false;
 
-    private cardInstances: CardInstance[] = [];
-    private hasActiveSelection: boolean = false;
+    private readonly handleRootClick = (event: MouseEvent): void => {
+        if (event.defaultPrevented || !this.allowInteractions()) {
+            return;
+        }
 
-    constructor(options: VisualConstructorOptions) {
+        void this.selectionManager.clear().then((selectionIds) => {
+            this.syncSelectionState(selectionIds as unknown as ISelectionId[]);
+        });
+    };
+
+    private readonly handleRootContextMenu = (event: MouseEvent): void => {
+        if (event.defaultPrevented) {
+            return;
+        }
+
+        event.preventDefault();
+        void this.selectionManager.showContextMenu({} as HostSelectionId, {
+            x: event.clientX,
+            y: event.clientY,
+        });
+    };
+
+    public constructor(options?: VisualConstructorOptions) {
+        if (!options) {
+            throw new Error("Visual constructor options are required.");
+        }
+
         this.target = options.element;
         this.host = options.host;
-        this.selectionManager = this.host.createSelectionManager();
+        this.events = options.host.eventService;
+        this.selectionManager = options.host.createSelectionManager();
+        this.tooltipServiceWrapper = createTooltipServiceWrapper(options.host.tooltipService, options.element);
         this.formattingSettingsService = new FormattingSettingsService();
-        this.formattingSettings = new VisualFormattingSettingsModel();
-        this.target.classList.add("flip-card-visual-root");
 
+        this.target.classList.add("flip-card-visual-root");
+        this.applyHostColors();
         this.cardContainer = document.createElement("div");
         this.cardContainer.className = "flip-card-container";
+        this.target.replaceChildren(this.cardContainer);
+        this.target.addEventListener("click", this.handleRootClick);
+        this.target.addEventListener("contextmenu", this.handleRootContextMenu);
 
-        this.cardElements = this.createCardElements();
-
-        this.cardContainer.appendChild(this.cardElements.wrapper);
-        this.target.appendChild(this.cardContainer);
-
-        this.attachCardClickBehavior(this.cardElements);
-    }
-
-    public update(options: VisualUpdateOptions): void {
-        this.resizeCard(options);
-
-        const dataView = options.dataViews && options.dataViews[0];
-        const rowCount = this.getCategoryRowCount(dataView);
-
-        this.cardInstances = this.createCardInstances(dataView, rowCount);
-        this.rebuildCardContainer(this.cardInstances);
-
-        if (this.cardInstances.length === 0) {
-            this.clearSelectionState();
-            this.showEmptyState(this.cardElements);
-
-            return;
-        }
-
-        for (let index = 0; index < this.cardInstances.length; index++) {
-            this.renderCard(this.cardInstances[index]);
-        }
-    }
-
-    // -----------------------------
-    // Layout and state helpers
-    // -----------------------------
-
-    private resizeCard(options: VisualUpdateOptions): void {
-        this.cardContainer.style.width = `${options.viewport.width}px`;
-        this.cardContainer.style.height = `${options.viewport.height}px`;
-    }
-
-    private clearSelectionState(): void {
-        this.hasActiveSelection = false;
-        this.cardElements.wrapper.classList.remove("is-selected");
-
-        for (let index = 0; index < this.cardInstances.length; index++) {
-            this.cardInstances[index].elements.wrapper.classList.remove("is-selected");
-        }
-    }
-
-    private rebuildCardContainer(cardInstances: CardInstance[]): void {
-        this.cardContainer.replaceChildren();
-
-        const isMultiCard = cardInstances.length > 1;
-
-        this.cardContainer.classList.toggle("is-single-card", !isMultiCard);
-        this.cardContainer.classList.toggle("is-multi-card", isMultiCard);
-
-        if (cardInstances.length === 0) {
-            this.cardContainer.appendChild(this.cardElements.wrapper);
-
-            return;
-        }
-
-        for (let index = 0; index < cardInstances.length; index++) {
-            this.cardContainer.appendChild(cardInstances[index].elements.wrapper);
-        }
-    }
-
-    // -----------------------------
-    // Data preparation helpers
-    // -----------------------------
-
-    private getCardDataForRow(dataView: DataView | undefined, rowIndex: number): CardData | undefined {
-        if (!dataView || !dataView.categorical) {
-            return undefined;
-        }
-
-        const labelColumn = this.findCategoryByRole(dataView, "cardLabel");
-        const cardMeasure = this.findMeasureByRole(dataView, "cardValue");
-        const detailMeasure = this.findMeasureByRole(dataView, "detailValue");
-
-        if (!cardMeasure) {
-            return undefined;
-        }
-
-        const labelText = this.getCategoryLabel(labelColumn, rowIndex);
-        const cardMeasureName = cardMeasure.source.displayName || "Card Value";
-        const cardMeasureValue = this.getValueAtRow(cardMeasure, rowIndex);
-        const formattedCardMeasureValue = this.formatValue(cardMeasureValue, cardMeasure);
-        const selectionId = this.createCategorySelectionId(labelColumn, rowIndex);
-
-        if (!detailMeasure) {
-            return {
-                label: labelText,
-                frontTitle: cardMeasureName,
-                frontValue: formattedCardMeasureValue,
-                frontSubtitle: "Click card to view details",
-                backTitle: "Details",
-                backValue: cardMeasureName,
-                backSubtitle: `Current value: ${formattedCardMeasureValue}`,
-                selectionId: selectionId
-            };
-        }
-
-        const detailMeasureName = detailMeasure.source.displayName || "Detail Value";
-        const detailMeasureValue = this.getValueAtRow(detailMeasure, rowIndex);
-        const formattedDetailMeasureValue = this.formatValue(detailMeasureValue, detailMeasure);
-
-        return {
-            label: labelText,
-            frontTitle: cardMeasureName,
-            frontValue: formattedCardMeasureValue,
-            frontSubtitle: "Click card to view details",
-            backTitle: detailMeasureName,
-            backValue: formattedDetailMeasureValue,
-            backSubtitle: `Front value: ${formattedCardMeasureValue}`,
-            selectionId: selectionId
-        };
-    }
-
-    private getCategoryRowCount(dataView: DataView | undefined): number {
-        const labelColumn = dataView ? this.findCategoryByRole(dataView, "cardLabel") : undefined;
-
-        if (!labelColumn || !labelColumn.values) {
-            return 1;
-        }
-
-        return labelColumn.values.length;
-    }
-
-    // -----------------------------
-    // Card creation helpers
-    // -----------------------------
-
-    private createCardInstances(
-        dataView: DataView | undefined,
-        rowCount: number
-    ): CardInstance[] {
-        if (rowCount <= 0) {
-            return [];
-        }
-
-        const cardInstances: CardInstance[] = [];
-
-        for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
-            const cardElements = rowIndex === 0
-                ? this.cardElements
-                : this.createCardElements();
-
-            const cardInstance = this.createCardInstanceForRow(dataView, rowIndex, cardElements);
-
-            if (!cardInstance) {
-                continue;
+        this.selectionManager.registerOnSelectCallback((selectionIds: HostSelectionId[]) => {
+            if (!this.destroyed) {
+                this.syncSelectionState(selectionIds as unknown as ISelectionId[]);
             }
-
-            if (rowIndex > 0) {
-                this.attachCardClickBehavior(cardElements);
-            }
-
-            cardInstances.push(cardInstance);
-        }
-
-        return cardInstances;
-    }
-
-    private createCardInstanceForRow(
-        dataView: DataView | undefined,
-        rowIndex: number,
-        cardElements: CardDomElements
-    ): CardInstance | undefined {
-        const cardData = this.getCardDataForRow(dataView, rowIndex);
-
-        if (!cardData) {
-            return undefined;
-        }
-
-        return this.createCardInstance(cardData, cardElements);
-    }
-
-    private createCardInstance(
-        cardData: CardData,
-        cardElements: CardDomElements
-    ): CardInstance {
-        return {
-            data: cardData,
-            elements: cardElements
-        };
-    }
-
-    private createCardElements(): CardDomElements {
-        const wrapper = document.createElement("div");
-        wrapper.className = "flip-card-wrapper";
-
-        const inner = document.createElement("div");
-        inner.className = "flip-card-inner";
-
-        const frontFace = document.createElement("div");
-        frontFace.className = "flip-card-face flip-card-front";
-
-        const frontLabel = this.createTextElement("flip-card-label", "No label");
-        const frontTitle = this.createTextElement("flip-card-title", "Add a measure");
-        const frontValue = this.createTextElement("flip-card-value", "No value");
-        const frontSubtitle = this.createTextElement("flip-card-subtitle", "Drag a measure into Card Value");
-
-        frontFace.appendChild(frontLabel);
-        frontFace.appendChild(frontTitle);
-        frontFace.appendChild(frontValue);
-        frontFace.appendChild(frontSubtitle);
-
-        const backFace = document.createElement("div");
-        backFace.className = "flip-card-face flip-card-back";
-
-        const backLabel = this.createTextElement("flip-card-label", "No label");
-        const backTitle = this.createTextElement("flip-card-title", "Details");
-        const backValue = this.createTextElement("flip-card-value", "No detail");
-        const backSubtitle = this.createTextElement("flip-card-subtitle", "Drag another measure into Detail Value");
-
-        backFace.appendChild(backLabel);
-        backFace.appendChild(backTitle);
-        backFace.appendChild(backValue);
-        backFace.appendChild(backSubtitle);
-
-        inner.appendChild(frontFace);
-        inner.appendChild(backFace);
-        wrapper.appendChild(inner);
-
-        return {
-            wrapper,
-            inner,
-            frontLabel,
-            frontTitle,
-            frontValue,
-            frontSubtitle,
-            backLabel,
-            backTitle,
-            backValue,
-            backSubtitle
-        };
-    }
-
-    private createTextElement(className: string, text: string): HTMLDivElement {
-        const element = document.createElement("div");
-        element.className = className;
-        element.textContent = text;
-
-        return element;
-    }
-
-    // -----------------------------
-    // Card rendering helpers
-    // -----------------------------
-
-    private renderCard(cardInstance: CardInstance): void {
-        const cardData = cardInstance.data;
-        const cardElements = cardInstance.elements;
-
-        cardElements.frontLabel.textContent = cardData.label;
-        cardElements.frontTitle.textContent = cardData.frontTitle;
-        cardElements.frontValue.textContent = cardData.frontValue;
-        cardElements.frontSubtitle.textContent = cardData.frontSubtitle;
-
-        cardElements.backLabel.textContent = cardData.label;
-        cardElements.backTitle.textContent = cardData.backTitle;
-        cardElements.backValue.textContent = cardData.backValue;
-        cardElements.backSubtitle.textContent = cardData.backSubtitle;
-    }
-
-    private showEmptyState(cardElements: CardDomElements): void {
-        cardElements.frontLabel.textContent = "No label";
-        cardElements.frontTitle.textContent = "Add a measure";
-        cardElements.frontValue.textContent = "No value";
-        cardElements.frontSubtitle.textContent = "Drag a measure into Card Value";
-
-        cardElements.backLabel.textContent = "No label";
-        cardElements.backTitle.textContent = "Details";
-        cardElements.backValue.textContent = "No detail";
-        cardElements.backSubtitle.textContent = "Optional: drag another measure into Detail Value";
-    }
-
-    // -----------------------------
-    // Card interaction helpers
-    // -----------------------------
-
-    private attachCardClickBehavior(cardElements: CardDomElements): void {
-        cardElements.wrapper.addEventListener("click", (event: MouseEvent) => {
-            const cardInstance = this.getCardInstanceForElements(cardElements);
-
-            this.onCardClick(event, cardInstance);
         });
     }
 
-    private getCardInstanceForElements(cardElements: CardDomElements): CardInstance | undefined {
-        for (let index = 0; index < this.cardInstances.length; index++) {
-            const cardInstance = this.cardInstances[index];
+    public update(options: VisualUpdateOptions): void {
+        this.events.renderingStarted(options);
 
-            if (cardInstance.elements === cardElements) {
-                return cardInstance;
+        try {
+            const dataView = options.dataViews?.[0];
+            this.formattingSettings = dataView
+                ? this.formattingSettingsService.populateFormattingSettingsModel(
+                    VisualFormattingSettingsModel,
+                    dataView,
+                )
+                : new VisualFormattingSettingsModel();
+
+            const defaultFace = enumValue<CardFace>(getEnumSettingValue(this.formattingSettings.flipBehavior.defaultFace));
+            if (this.hasUpdated && defaultFace !== this.previousDefaultFace) {
+                for (const instance of this.cardInstances.values()) {
+                    instance.face = defaultFace;
+                }
             }
+            this.previousDefaultFace = defaultFace;
+            this.hasUpdated = true;
+
+            this.applyHostColors();
+            this.applyViewport(options);
+            if (this.isVerySmall(options)) {
+                this.showEmptyState("Increase the visual size", "The Smart KPI Flip Card needs a little more space to render.");
+                this.events.renderingFinished(options);
+                return;
+            }
+
+            const result = this.extract(dataView);
+            if (result.state !== "ready") {
+                this.renderDataState(result.state);
+                this.events.renderingFinished(options);
+                return;
+            }
+
+            this.preparePresentation(result.cards);
+            this.renderCards(result.cards, defaultFace);
+            this.syncSelectionState(this.selectionManager.getSelectionIds() as unknown as ISelectionId[]);
+            this.events.renderingFinished(options);
+        } catch (error: unknown) {
+            this.events.renderingFailed(options, error instanceof Error ? error.message : String(error));
+            throw error;
         }
-
-        return undefined;
     }
 
-    private isCardFlipEnabled(): boolean {
-        return this.formattingSettings.interactionsCard.enableFlip.value;
+    public getFormattingModel(): powerbi.visuals.FormattingModel {
+        return this.formattingSettingsService.buildFormattingModel(this.formattingSettings);
     }
 
-    private isCardSelectionEnabled(): boolean {
-        return true;
+    public destroy(): void {
+        this.destroyed = true;
+        this.tooltipServiceWrapper.hide();
+        this.target.removeEventListener("click", this.handleRootClick);
+        this.target.removeEventListener("contextmenu", this.handleRootContextMenu);
+        this.cardInstances.clear();
+        this.target.replaceChildren();
     }
 
-    private handleCardFlip(cardElements: CardDomElements): boolean {
-        if (!this.isCardFlipEnabled()) {
-            return false;
+    private extract(dataView: DataView | undefined): DataExtractionResult {
+        return extractDataView(
+            dataView,
+            this.host,
+            this.host.locale,
+            {
+                main: {
+                    displayUnits: numericSetting(this.formattingSettings.mainValue.displayUnits.value),
+                    precision: getDecimalPrecision(this.formattingSettings.mainValue.decimalPlaces),
+                },
+                detail: {
+                    displayUnits: numericSetting(this.formattingSettings.detailValues.displayUnits.value),
+                    precision: getDecimalPrecision(this.formattingSettings.detailValues.decimalPlaces),
+                },
+            },
+            {
+                direction: enumValue<KpiDirection>(getEnumSettingValue(this.formattingSettings.kpiStatus.direction)),
+                neutralTolerancePercent: this.formattingSettings.kpiStatus.tolerance.value,
+            },
+        );
+    }
+
+    private preparePresentation(cards: CardViewModel[]): void {
+        const varianceMode = enumValue<VarianceMode>(getEnumSettingValue(this.formattingSettings.kpiStatus.varianceMode));
+        const detailFormatting = {
+            displayUnits: numericSetting(this.formattingSettings.detailValues.displayUnits.value),
+            precision: getDecimalPrecision(this.formattingSettings.detailValues.decimalPlaces),
+        };
+
+        for (const card of cards) {
+            card.varianceText = getVarianceDisplayText(
+                card,
+                varianceMode,
+                this.host.locale,
+                detailFormatting,
+            );
+            prepareTooltipItems(card);
         }
-
-        return this.toggleCardFlip(cardElements);
     }
 
-    private toggleCardFlip(cardElements: CardDomElements): boolean {
-        const wasFlipped = cardElements.inner.classList.contains("is-flipped");
-
-        cardElements.inner.classList.toggle("is-flipped", !wasFlipped);
-
-        return wasFlipped;
+    private applyViewport(options: VisualUpdateOptions): void {
+        this.cardContainer.style.width = `${Math.max(0, options.viewport.width)}px`;
+        this.cardContainer.style.height = `${Math.max(0, options.viewport.height)}px`;
+        this.target.classList.toggle("is-compact", options.viewport.width < 280 || options.viewport.height < 160);
+        this.target.classList.toggle("is-very-small", this.isVerySmall(options));
     }
 
-    private shouldHandleCardSelection(
-        wasFlippedBeforeClick: boolean,
-        cardInstance: CardInstance | undefined
-    ): cardInstance is CardInstance {
-        return this.isCardSelectionEnabled()
-            && !wasFlippedBeforeClick
-            && cardInstance !== undefined;
+    private applyHostColors(): void {
+        const palette = this.host.colorPalette;
+        this.target.classList.toggle("is-high-contrast", palette.isHighContrast);
+        this.target.style.setProperty("--flip-host-background", palette.isHighContrast ? palette.background.value : "#FFFFFF");
+        this.target.style.setProperty("--flip-host-foreground", palette.isHighContrast ? palette.foreground.value : "#1F2937");
     }
 
-    private handleCardSelection(cardInstance: CardInstance): void {
-        const cardElements = cardInstance.elements;
-        const selectionId = cardInstance.data.selectionId;
+    private isVerySmall(options: VisualUpdateOptions): boolean {
+        return options.viewport.width < 120 || options.viewport.height < 72;
+    }
 
-        if (!selectionId) {
+    private renderDataState(state: VisualDataState): void {
+        if (state === "missingCardValue") {
+            this.showEmptyState("Add Card Value", "Drag a numeric measure into the Card Value field well.");
             return;
         }
 
-        const isClickedCardSelected = cardElements.wrapper.classList.contains("is-selected");
-
-        if (isClickedCardSelected) {
-            void this.selectionManager.clear().then(() => {
-                this.clearSelectionState();
-            });
-
-            return;
-        }
-
-        this.clearSelectionState();
-
-        void this.selectionManager
-            .select(selectionId, false)
-            .then((selectionIds: ISelectionId[]) => {
-                this.hasActiveSelection = selectionIds.length > 0;
-                cardElements.wrapper.classList.toggle("is-selected", this.hasActiveSelection);
-            });
+        this.showEmptyState("No data available", "No rows are available for the current filters.");
     }
 
-    private getCardElementsForClick(
-        cardInstance: CardInstance | undefined
-    ): CardDomElements {
-        return cardInstance
-            ? cardInstance.elements
-            : this.cardElements;
+    private showEmptyState(title: string, message: string): void {
+        this.cardInstances.clear();
+        this.cardContainer.classList.remove("is-multi-card", "has-active-selection");
+        const emptyState = document.createElement("div");
+        emptyState.className = "flip-card-empty-state";
+        emptyState.setAttribute("role", "status");
+        const titleElement = document.createElement("div");
+        titleElement.className = "flip-card-empty-title";
+        titleElement.textContent = title;
+        const messageElement = document.createElement("div");
+        messageElement.className = "flip-card-empty-message";
+        messageElement.textContent = message;
+        emptyState.append(titleElement, messageElement);
+        this.cardContainer.replaceChildren(emptyState);
     }
 
-    private onCardClick(
-        event: MouseEvent,
-        cardInstance: CardInstance | undefined
-    ): void {
-        event.stopPropagation();
-
-        const cardElements = this.getCardElementsForClick(cardInstance);
-        const wasFlipped = this.handleCardFlip(cardElements);
-
-        if (!this.shouldHandleCardSelection(wasFlipped, cardInstance)) {
-            return;
-        }
-
-        this.handleCardSelection(cardInstance);
-    }
-
-    // -----------------------------
-    // Power BI lookup and formatting helpers
-    // -----------------------------
-
-    private findCategoryByRole(dataView: DataView, roleName: string): DataViewCategoryColumn | undefined {
-        const categories = dataView.categorical && dataView.categorical.categories;
-
-        if (!categories) {
-            return undefined;
-        }
-
-        for (let index = 0; index < categories.length; index++) {
-            const categoryColumn = categories[index];
-
-            if (categoryColumn.source.roles && categoryColumn.source.roles[roleName]) {
-                return categoryColumn;
+    private renderCards(cards: CardViewModel[], defaultFace: CardFace): void {
+        const retainedKeys = new Set(cards.map((card) => card.key));
+        for (const [key, instance] of this.cardInstances) {
+            if (!retainedKeys.has(key)) {
+                instance.elements.wrapper.remove();
+                this.cardInstances.delete(key);
             }
         }
 
-        return undefined;
-    }
-
-    private findMeasureByRole(dataView: DataView, roleName: string): DataViewValueColumn | undefined {
-        const values = dataView.categorical && dataView.categorical.values;
-
-        if (!values) {
-            return undefined;
-        }
-
-        for (let index = 0; index < values.length; index++) {
-            const valueColumn = values[index];
-
-            if (valueColumn.source.roles && valueColumn.source.roles[roleName]) {
-                return valueColumn;
+        this.cardContainer.classList.toggle("is-multi-card", cards.length > 1);
+        for (const card of cards) {
+            let instance = this.cardInstances.get(card.key);
+            if (!instance) {
+                instance = {
+                    elements: createCardElements(),
+                    face: defaultFace,
+                    model: card,
+                };
+                this.cardInstances.set(card.key, instance);
+                this.attachCardEvents(card.key, instance.elements);
+            } else {
+                instance.model = card;
             }
-        }
 
-        return undefined;
-    }
+            if (!this.formattingSettings.flipBehavior.showButton.value) {
+                instance.face = defaultFace;
+            }
 
-    private createCategorySelectionId(
-        categoryColumn: DataViewCategoryColumn | undefined,
-        rowIndex: number
-    ): ISelectionId | undefined {
-        if (!categoryColumn || !categoryColumn.values || categoryColumn.values.length === 0) {
-            return undefined;
-        }
-
-        return this.host
-            .createSelectionIdBuilder()
-            .withCategory(categoryColumn, rowIndex)
-            .createSelectionId();
-    }
-
-    private getCategoryLabel(categoryColumn: DataViewCategoryColumn | undefined, rowIndex: number): string {
-        if (!categoryColumn || !categoryColumn.values || categoryColumn.values.length === 0) {
-            return "All";
-        }
-
-        return this.formatValue(categoryColumn.values[rowIndex]);
-    }
-
-    private getValueAtRow(valueColumn: DataViewValueColumn, rowIndex: number): unknown {
-        if (!valueColumn.values || valueColumn.values.length <= rowIndex) {
-            return undefined;
-        }
-
-        return valueColumn.values[rowIndex];
-    }
-
-    private formatValue(value: unknown, valueColumn?: DataViewValueColumn): string {
-        if (value === null || value === undefined) {
-            return "No value";
-        }
-
-        if (typeof value === "number") {
-            const formatString = valueColumn && valueColumn.source
-                ? valueColumn.source.format
-                : undefined;
-
-            const formatter = valueFormatter.create({
-                format: formatString,
-                value: value,
-                formatSingleValues: true,
-                allowFormatBeautification: true,
-                cultureSelector: "en-US"
+            renderCard(instance.elements, card, {
+                allowInteractions: this.allowInteractions(),
+                colorPalette: this.host.colorPalette,
+                face: instance.face,
+                selected: false,
+                settings: this.formattingSettings,
             });
+            this.cardContainer.append(instance.elements.wrapper);
+            this.attachTooltip(instance.elements, card);
+        }
+    }
 
-            return formatter.format(value);
+    private attachCardEvents(key: string, elements: CardElements): void {
+        const selectCard = (event: MouseEvent): void => {
+            event.stopPropagation();
+            this.selectCard(key, event.ctrlKey || event.metaKey);
+        };
+        const flipCard = (event: MouseEvent): void => {
+            event.preventDefault();
+            event.stopPropagation();
+            this.flipCard(key);
+        };
+
+        elements.frontSelectionButton.addEventListener("click", selectCard);
+        elements.backSelectionButton.addEventListener("click", selectCard);
+        elements.frontFlipButton.addEventListener("click", flipCard);
+        elements.backFlipButton.addEventListener("click", flipCard);
+        elements.wrapper.addEventListener("contextmenu", (event: MouseEvent) => {
+            event.preventDefault();
+            event.stopPropagation();
+            const selectionId = this.cardInstances.get(key)?.model.selectionId;
+            void this.selectionManager.showContextMenu(selectionId ?? ({} as HostSelectionId), {
+                x: event.clientX,
+                y: event.clientY,
+            });
+        });
+    }
+
+    private attachTooltip(elements: CardElements, card: CardViewModel): void {
+        const selection = d3Select(elements.frontSelectionButton).datum(card);
+        const backSelection = d3Select(elements.backSelectionButton).datum(card);
+        this.tooltipServiceWrapper.addTooltip<CardViewModel>(
+            selection,
+            (dataPoint: CardViewModel) => dataPoint.tooltipItems,
+            (dataPoint: CardViewModel) => dataPoint.selectionId as unknown as HostSelectionId,
+            true,
+        );
+        this.tooltipServiceWrapper.addTooltip<CardViewModel>(
+            backSelection,
+            (dataPoint: CardViewModel) => dataPoint.tooltipItems,
+            (dataPoint: CardViewModel) => dataPoint.selectionId as unknown as HostSelectionId,
+            true,
+        );
+    }
+
+    private selectCard(key: string, multiSelect: boolean): void {
+        const instance = this.cardInstances.get(key);
+        const selectionId = instance?.model.selectionId;
+        if (!selectionId || !this.allowInteractions()) {
+            return;
         }
 
-        return String(value);
+        const current = this.selectionManager.getSelectionIds() as unknown as ISelectionId[];
+        const isOnlySelected = !multiSelect
+            && current.length === 1
+            && current[0]?.equals(selectionId) === true;
+        if (isOnlySelected) {
+            void this.selectionManager.clear().then((selectionIds) => {
+                this.syncSelectionState(selectionIds as unknown as ISelectionId[]);
+            });
+            return;
+        }
+
+        void this.selectionManager.select(selectionId, multiSelect).then((selectionIds) => {
+            this.syncSelectionState(selectionIds as unknown as ISelectionId[]);
+        });
+    }
+
+    private flipCard(key: string): void {
+        const instance = this.cardInstances.get(key);
+        if (!instance || !this.formattingSettings.flipBehavior.showButton.value) {
+            return;
+        }
+
+        instance.face = instance.face === "front" ? "back" : "front";
+        updateCardFace(instance.elements, instance.face);
+    }
+
+    private syncSelectionState(selectionIds: ISelectionId[]): void {
+        const hasSelection = selectionIds.length > 0;
+        this.cardContainer.classList.toggle("has-active-selection", hasSelection);
+
+        for (const instance of this.cardInstances.values()) {
+            const identity = instance.model.selectionId;
+            const selected = identity !== undefined && selectionIds.some((selectionId) => selectionId.includes(identity));
+            instance.elements.wrapper.classList.toggle("is-selected", selected);
+            instance.elements.frontSelectionButton.setAttribute("aria-pressed", String(selected));
+            instance.elements.backSelectionButton.setAttribute("aria-pressed", String(selected));
+        }
+    }
+
+    private allowInteractions(): boolean {
+        return this.host.hostCapabilities?.allowInteractions !== false;
     }
 }

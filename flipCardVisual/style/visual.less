@@ -1,167 +1,450 @@
 .flip-card-visual-root {
+    --flip-front-background: #0f6cbd;
+    --flip-back-background: #f7f9fc;
+    --flip-border-color: #d1d5db;
+    --flip-border-width: 1px;
+    --flip-radius: 16px;
+    --flip-configured-padding: 20px;
+    --flip-padding: var(--flip-configured-padding);
+    --flip-accent-color: #2d7d9a;
+    --flip-label-family: "Segoe UI", sans-serif;
+    --flip-label-size: 14px;
+    --flip-label-color: #eaf3fb;
+    --flip-label-weight: 700;
+    --flip-label-align: left;
+    --flip-main-family: "Segoe UI", sans-serif;
+    --flip-main-size: 40px;
+    --flip-main-color: #ffffff;
+    --flip-main-weight: 700;
+    --flip-main-align: left;
+    --flip-detail-family: "Segoe UI", sans-serif;
+    --flip-detail-size: 14px;
+    --flip-detail-label-color: #5b6472;
+    --flip-detail-value-color: #1f2937;
+    --flip-detail-spacing: 10px;
+    --flip-status-color: #8a6d1d;
+    --flip-button-size: 30px;
+    --flip-button-color: #0f6cbd;
+    --flip-button-background: #ffffff;
+    --flip-focus-color: #ffffff;
+    --flip-focus-inset: #005a9e;
+    --flip-selection-color: #0078d4;
+    --flip-host-background: #ffffff;
+    --flip-host-foreground: #1f2937;
+    --flip-duration: 600ms;
+
     width: 100%;
     height: 100%;
+    min-width: 0;
+    min-height: 0;
     box-sizing: border-box;
+    overflow: hidden;
+    color: #1f2937;
     font-family: "Segoe UI", Arial, sans-serif;
-}
 
-.flip-card-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    width: 100%;
-    height: 100%;
-    box-sizing: border-box;
-    overflow: hidden;
-}
+    *,
+    *::before,
+    *::after {
+        box-sizing: border-box;
+    }
 
-.flip-card-wrapper {
-    width: 100%;
-    height: 100%;
-    perspective: 1000px;
-    cursor: pointer;
-    box-sizing: border-box;
-}
+    .flip-card-container {
+        display: flex;
+        width: 100%;
+        height: 100%;
+        min-width: 0;
+        min-height: 0;
+        gap: 12px;
+        overflow: hidden;
+    }
 
-.flip-card-container.is-multi-card {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 320px));
-    grid-auto-rows: 160px;
-    justify-content: center;
-    align-content: flex-start;
-    padding: 12px;
-    overflow-x: hidden;
-    overflow-y: auto;
-}
-
-.flip-card-container.is-multi-card .flip-card-wrapper {
-    width: 100%;
-    height: 100%;
-    max-width: none;
-}
-
-.flip-card-wrapper.is-selected .flip-card-face {
-    border: 2px solid #0078d4;
-    box-shadow:
-        0 0 0 4px rgba(0, 120, 212, 0.18),
-        0 14px 34px rgba(0, 0, 0, 0.22);
-}
-
-.flip-card-inner {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    transition: transform 0.7s ease;
-    transform-style: preserve-3d;
-}
-
-.flip-card-inner.is-flipped {
-    transform: rotateY(180deg);
-}
-
-.flip-card-face {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: flex-start;
-    padding: 24px;
-    border-radius: 18px;
-    box-sizing: border-box;
-    backface-visibility: hidden;
-    overflow: hidden;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
-}
-
-.flip-card-front {
-    background: linear-gradient(135deg, #9e6d6d, #cee029);
-    color: #ffffff;
-}
-
-.flip-card-back {
-    background: linear-gradient(135deg, #ffffff, #f2f2f2);
-    color: #111111;
-    border: 1px solid #dddddd;
-    transform: rotateY(180deg);
-}
-
-.flip-card-label {
-    font-size: 14px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    opacity: 0.7;
-    margin-bottom: 10px;
-}
-
-.flip-card-title {
-    font-size: 16px;
-    font-weight: 600;
-    opacity: 0.85;
-    margin-bottom: 12px;
-}
-
-.flip-card-value {
-    font-size: 38px;
-    font-weight: 700;
-    line-height: 1.1;
-    margin-bottom: 12px;
-}
-
-.flip-card-subtitle {
-    font-size: 13px;
-    font-weight: 400;
-    opacity: 0.75;
-}
-
-.flip-card-container.is-multi-card .flip-card-face {
-    padding: 18px;
-    border-radius: 16px;
-}
-
-.flip-card-container.is-multi-card .flip-card-label {
-    font-size: 11px;
-    margin-bottom: 6px;
-}
-
-.flip-card-container.is-multi-card .flip-card-title {
-    font-size: 13px;
-    margin-bottom: 8px;
-}
-
-.flip-card-container.is-multi-card .flip-card-value {
-    font-size: 30px;
-    margin-bottom: 8px;
-}
-
-.flip-card-container.is-multi-card .flip-card-subtitle {
-    font-size: 11px;
-}
-
-@media (max-width: 260px) {
     .flip-card-container.is-multi-card {
-        grid-template-columns: 1fr;
-        grid-auto-rows: 150px;
-        padding: 8px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+        grid-auto-rows: minmax(150px, 190px);
+        align-content: start;
+        padding: 10px;
+        overflow-x: hidden;
+        overflow-y: auto;
+    }
+
+    .flip-card-wrapper {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        min-width: 0;
+        min-height: 0;
+        perspective: 1000px;
+        container-type: size;
+        outline: none;
+    }
+
+    .flip-card-wrapper.has-shadow .flip-card-face {
+        box-shadow: 0 10px 28px rgba(15, 23, 42, 0.18);
+    }
+
+    .flip-card-wrapper.is-selected .flip-card-face {
+        border-color: var(--flip-selection-color);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--flip-selection-color) 28%, transparent), 0 10px 28px rgba(15, 23, 42, 0.18);
+    }
+
+    .flip-card-container.has-active-selection .flip-card-wrapper:not(.is-selected) {
+        opacity: 0.55;
+    }
+
+    .flip-card-inner {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        transform-style: preserve-3d;
+        transition: transform var(--flip-duration) cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+
+    .flip-card-inner.is-flipped {
+        transform: rotateY(180deg);
+    }
+
+    .flip-card-face {
+        position: absolute;
+        inset: 0;
+        min-width: 0;
+        min-height: 0;
+        overflow: hidden;
+        border: var(--flip-border-width) solid var(--flip-border-color);
+        border-radius: var(--flip-radius);
+        backface-visibility: hidden;
+    }
+
+    .flip-card-face::before {
+        content: "";
+        position: absolute;
+        z-index: 2;
+        inset: 0 auto 0 0;
+        width: max(4px, var(--flip-border-width));
+        background: var(--flip-accent-color);
+        pointer-events: none;
+    }
+
+    .flip-card-front {
+        color: var(--flip-main-color);
+        background: var(--flip-front-background);
+    }
+
+    .flip-card-back {
+        color: var(--flip-detail-value-color);
+        background: var(--flip-back-background);
+        transform: rotateY(180deg);
+    }
+
+    .flip-card-selection-surface {
+        position: absolute;
+        z-index: 1;
+        inset: 0;
+        display: flex;
+        width: 100%;
+        height: 100%;
+        min-width: 0;
+        min-height: 0;
+        margin: 0;
+        padding: var(--flip-padding);
+        overflow: hidden;
+        border: 0;
+        border-radius: inherit;
+        color: inherit;
+        background: transparent;
+        font: inherit;
+        text-align: left;
+        cursor: pointer;
+        appearance: none;
+    }
+
+    .flip-card-selection-surface[aria-disabled="true"] {
+        cursor: default;
+    }
+
+    .flip-card-selection-surface:focus-visible,
+    .flip-card-flip-button:focus-visible {
+        outline: 3px solid var(--flip-focus-color);
+        outline-offset: -5px;
+        box-shadow: inset 0 0 0 5px var(--flip-focus-inset);
+    }
+
+    .flip-card-front-content {
+        flex-direction: column;
+        justify-content: center;
+        align-items: stretch;
+        gap: clamp(5px, 3cqh, 12px);
+    }
+
+    .flip-card-wrapper.has-flip-button.flip-button-right .flip-card-selection-surface {
+        padding-right: calc(var(--flip-padding) + var(--flip-button-size));
+    }
+
+    .flip-card-wrapper.has-flip-button.flip-button-left .flip-card-selection-surface {
+        padding-left: calc(var(--flip-padding) + var(--flip-button-size));
+    }
+
+    .flip-card-label {
+        width: 100%;
+        overflow: hidden;
+        color: var(--flip-label-color);
+        font-family: var(--flip-label-family);
+        font-size: min(var(--flip-label-size), clamp(10px, 7cqh, 18px));
+        font-weight: var(--flip-label-weight);
+        line-height: 1.25;
+        letter-spacing: 0.025em;
+        text-align: var(--flip-label-align);
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .flip-card-wrapper.label-wrap .flip-card-label {
+        display: -webkit-box;
+        white-space: normal;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+    }
+
+    .flip-card-main-value {
+        width: 100%;
+        min-width: 0;
+        overflow: hidden;
+        color: var(--flip-main-color);
+        font-family: var(--flip-main-family);
+        font-size: min(var(--flip-main-size), clamp(22px, 24cqh, 64px));
+        font-weight: var(--flip-main-weight);
+        line-height: 1.05;
+        text-align: var(--flip-main-align);
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .flip-card-variance {
+        width: 100%;
+        overflow: hidden;
+        color: var(--flip-label-color);
+        font-size: min(13px, clamp(10px, 6cqh, 13px));
+        font-weight: 600;
+        line-height: 1.2;
+        text-align: var(--flip-main-align);
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .flip-card-status {
+        align-self: flex-start;
+        max-width: 100%;
+        padding: 3px 8px;
+        overflow: hidden;
+        border: 1px solid currentColor;
+        border-radius: 999px;
+        color: var(--flip-status-color);
+        background: rgba(255, 255, 255, 0.92);
+        font-size: min(12px, clamp(9px, 5.5cqh, 12px));
+        font-weight: 700;
+        line-height: 1.25;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .flip-card-back-content {
+        flex-direction: column;
+        gap: clamp(6px, 4cqh, 12px);
+    }
+
+    .flip-card-back-label {
+        width: 100%;
+        overflow: hidden;
+        color: var(--flip-detail-value-color);
+        font-family: var(--flip-label-family);
+        font-size: min(var(--flip-label-size), clamp(10px, 7cqh, 18px));
+        font-weight: 700;
+        line-height: 1.25;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .flip-card-detail-list {
+        display: flex;
+        flex: 1 1 auto;
+        flex-direction: column;
+        justify-content: center;
+        min-height: 0;
+        gap: min(var(--flip-detail-spacing), 3cqh);
+        overflow: hidden;
+    }
+
+    .flip-card-detail-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+        align-items: baseline;
         gap: 8px;
+        min-width: 0;
+        font-family: var(--flip-detail-family);
+        font-size: min(var(--flip-detail-size), clamp(9px, 6cqh, 18px));
+        line-height: 1.2;
     }
 
-    .flip-card-container.is-multi-card .flip-card-face {
-        padding: 14px;
-        border-radius: 14px;
+    .flip-card-detail-row[hidden] {
+        display: none;
     }
 
-    .flip-card-container.is-multi-card .flip-card-value {
-        font-size: 26px;
+    .flip-card-detail-label,
+    .flip-card-detail-value {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
-    .flip-card-container.is-multi-card .flip-card-title {
-        font-size: 12px;
+    .flip-card-detail-label {
+        color: var(--flip-detail-label-color);
+        font-weight: 600;
     }
 
-    .flip-card-container.is-multi-card .flip-card-label,
-    .flip-card-container.is-multi-card .flip-card-subtitle {
-        font-size: 10px;
+    .flip-card-detail-value {
+        color: var(--flip-detail-value-color);
+        font-weight: 700;
+        text-align: right;
+    }
+
+    .flip-card-detail-status .flip-card-detail-value {
+        color: var(--flip-status-color);
+    }
+
+    .flip-card-flip-button {
+        position: absolute;
+        z-index: 3;
+        display: grid;
+        place-items: center;
+        width: var(--flip-button-size);
+        height: var(--flip-button-size);
+        margin: 0;
+        padding: 0;
+        border: 1px solid currentColor;
+        border-radius: 50%;
+        color: var(--flip-button-color);
+        background: var(--flip-button-background);
+        font-family: "Segoe UI Symbol", "Segoe UI", sans-serif;
+        font-size: calc(var(--flip-button-size) * 0.56);
+        font-weight: 700;
+        line-height: 1;
+        cursor: pointer;
+        appearance: none;
+    }
+
+    .flip-card-flip-button[hidden] {
+        display: none;
+    }
+
+    .flip-card-flip-button.position-topLeft {
+        top: 10px;
+        left: 10px;
+    }
+
+    .flip-card-flip-button.position-topRight {
+        top: 10px;
+        right: 10px;
+    }
+
+    .flip-card-flip-button.position-bottomLeft {
+        bottom: 10px;
+        left: 10px;
+    }
+
+    .flip-card-flip-button.position-bottomRight {
+        right: 10px;
+        bottom: 10px;
+    }
+
+    .flip-card-sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+
+    .flip-card-empty-state {
+        display: flex;
+        flex: 1 1 auto;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        width: 100%;
+        height: 100%;
+        padding: 16px;
+        color: var(--flip-host-foreground);
+        background: var(--flip-host-background);
+        text-align: center;
+    }
+
+    .flip-card-empty-title {
+        color: var(--flip-host-foreground);
+        font-size: clamp(13px, 6cqh, 18px);
+        font-weight: 700;
+    }
+
+    .flip-card-empty-message {
+        max-width: 34rem;
+        font-size: clamp(10px, 4.5cqh, 13px);
+        line-height: 1.35;
+    }
+
+    &.is-compact {
+        .flip-card-wrapper {
+            --flip-padding: min(10px, var(--flip-configured-padding));
+        }
+
+        .flip-card-variance,
+        .flip-card-status {
+            display: none;
+        }
+
+        .flip-card-wrapper.has-value-error .flip-card-variance {
+            display: block;
+        }
+
+        .flip-card-front-content,
+        .flip-card-back-content {
+            gap: 5px;
+        }
+
+        .flip-card-detail-row {
+            gap: 5px;
+        }
+
+        .flip-card-back-content {
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        .flip-card-detail-list {
+            flex: 0 0 auto;
+            overflow: visible;
+        }
+    }
+
+    &.is-very-small .flip-card-container {
+        display: flex;
+    }
+
+    .flip-card-wrapper.is-high-contrast.is-selected .flip-card-face {
+        border-width: 3px;
+        box-shadow: none;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .flip-card-inner {
+            transition: none;
+        }
+
+        .flip-card-flip-button {
+            transition: none;
+        }
     }
 }
