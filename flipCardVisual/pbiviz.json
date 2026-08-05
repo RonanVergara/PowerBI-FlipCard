@@ -1,1 +1,23 @@
-{"visual":{"name":"flipCardVisual","displayName":"FlipCardVisual","guid":"flipCardVisualFC7B9C3E9690417084C0A63577A86637","visualClassName":"Visual","version":"1.0.0.0","description":"A custom flip card visual for Power BI.","supportUrl":"https://example.compbiviz package","gitHubUrl":""},"apiVersion":"5.3.0","author":{"name":"Ronan Vergara","email":"Vergara.Michael.Ronan@gmail.com"},"assets":{"icon":"assets/icon.png"},"externalJS":null,"style":"style/visual.less","capabilities":"capabilities.json","dependencies":null,"stringResources":[],"version":"1.0.0.0"}
+{
+  "visual": {
+    "name": "flipCardVisual",
+    "displayName": "Smart KPI Flip Card",
+    "guid": "flipCardVisualFC7B9C3E9690417084C0A63577A86637",
+    "visualClassName": "Visual",
+    "version": "1.0.0.0",
+    "description": "A responsive KPI card with a dedicated detail face, target and comparison status, native Power BI interactions, and accessible formatting controls.",
+    "supportUrl": "https://github.com/RonanVergara/PowerBI-FlipCard/issues",
+    "gitHubUrl": "https://github.com/RonanVergara/PowerBI-FlipCard"
+  },
+  "apiVersion": "5.11.0",
+  "author": {
+    "name": "Ronan Vergara",
+    "email": "Vergara.Michael.Ronan@gmail.com"
+  },
+  "assets": {
+    "icon": "assets/icon.png"
+  },
+  "externalJS": [],
+  "style": "style/visual.less",
+  "capabilities": "capabilities.json"
+}

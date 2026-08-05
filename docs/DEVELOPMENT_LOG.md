@@ -1,614 +1,131 @@
-# Power BI Flip Card Custom Visual
+# Smart KPI Flip Card — Technical Notes
 
-## Project Overview
+This document describes the implementation of production release 1.0.0. It is an architecture and maintenance reference, not a duplicate of the end-user README.
 
-Power BI Flip Card is a custom Power BI visual that creates a modern, interactive smart KPI card experience.
+## Architecture
 
-The project started as a click-to-flip KPI card, but the long-term goal is bigger than a flip animation.
+The visual keeps host orchestration separate from data and presentation logic:
 
-The goal is to build a reusable and highly customizable Power BI visual that can work as:
+| Module | Responsibility |
+| --- | --- |
+| `src/visual.ts` | Power BI lifecycle, formatting population, stable card instances, selection, context menus, tooltips, viewport state, and rendering events. |
+| `src/data.ts` | Categorical role lookup, row extraction, validation, display names, selection identities, and stable keys. |
+| `src/kpi.ts` | Pure benchmark, tolerance, status, and variance calculations. |
+| `src/valueFormatting.ts` | Power BI value formatting, signed variance text, zero-reference handling, and tooltip item composition. |
+| `src/renderer.ts` | Safe DOM creation, card-face rendering, conditional styling, ARIA state, and high-contrast colors. |
+| `src/settings.ts` | Formatting-model cards, slices, defaults, enumerations, and validators. |
+| `src/types.ts` | Shared domain types and view models. |
+| `style/visual.less` | Root-scoped layout, responsive behavior, focus styles, flip animation, and reduced-motion override. |
 
-* A simple static KPI card
-* An animated flip card
-* A multi-card KPI grid
-* A category-based card comparison visual
-* A dashboard filtering helper without bookmarks
-* A flexible one-stop-shop KPI visual controlled through the Power BI formatting pane
+No user-provided content is inserted with `innerHTML`; rendering uses created nodes and `textContent`.
 
-This is a learning-first project and a portfolio-quality project.
+## Data flow
 
-The visual should become useful in real dashboards, not just as a coding demo.
+1. `Visual.update()` starts the host rendering lifecycle and populates formatting settings from the current `DataView`.
+2. Viewport classes and the very-small state are evaluated before extraction.
+3. `extractDataView()` finds columns by their stable role identifiers, validates values, formats them with source metadata and locale, creates category identities where possible, and calculates KPI results.
+4. Presentation preparation formats variance and composes native tooltip items.
+5. `renderCards()` reconciles DOM instances by stable selection key. Existing identities retain face state; changed identities start at Default Face.
+6. The renderer applies content, section visibility, CSS variables, conditional color, and accessibility state.
+7. Host selection state is reapplied, then rendering finishes exactly once. Unexpected exceptions signal `renderingFailed` and are rethrown.
 
----
+Without a Label category, extraction intentionally uses only the first Card Value row. With Label, one instance is produced per category row for backward compatibility.
 
-## Product Vision
+## Formatting model
 
-Power BI Flip Card should become a customizable smart KPI card visual for Power BI.
+`VisualFormattingSettingsModel` contains six `SimpleCard` classes whose names and slice names match `capabilities.json`. `FormattingSettingsService.populateFormattingSettingsModel()` runs during every update, including formatting-only updates. `getFormattingModel()` returns `buildFormattingModel()` directly.
 
-The long-term direction is:
+Dropdown values are stable string enums. Numeric controls have formatting-model validators. Decimal precision defaults to `Auto` (`undefined` at the formatter boundary), preserving model precision and formats. Power BI SDK package 5.11.1 exposes API version 5.11.0, which is the value stored in `pbiviz.json`.
 
-```plaintext
-One visual.
-Multiple card modes.
-User-controlled features.
-No bookmarks required.
-Modern Power BI dashboard experience.
+## KPI rules
+
+- Valid Target has first priority for status; otherwise valid Comparison; otherwise no benchmark.
+- Valid Comparison has first priority for variance; otherwise valid Target.
+- Absolute variance is value minus variance reference.
+- Percentage variance divides by `abs(reference)`, so negative references retain an intuitive denominator while absolute variance remains signed.
+- A zero reference makes percentage variance unavailable instead of producing infinity.
+- Neutral tolerance is `abs(status reference) × tolerance percent / 100`.
+- Direction controls favorable sign only. Equality and differences within tolerance are neutral.
+- Invalid optional fields are not calculation inputs. Invalid Target can therefore fall back to Comparison.
+
+## Selection and flip state
+
+The selection surface and flip control are sibling native buttons. Their event handlers are attached once when an identity-keyed card instance is created.
+
+- Selection uses `select(identity, ctrlKey || metaKey)` and `clear()` for a sole selected identity clicked again.
+- `registerOnSelectCallback()` and `getSelectionIds()` restore styling after host updates.
+- Root blank-space clicks clear selection.
+- Flip buttons stop propagation and update only local face state.
+- Changing Default Face resets retained instances. Hiding the button returns instances to the configured default.
+- A category-less card has no selection identity and makes no invalid host calls.
+
+Right-click routes through `showContextMenu()` with either the card identity or an empty visual context. Browser context menus are suppressed inside the visual.
+
+## Native tooltips
+
+`powerbi-visuals-utils-tooltiputils` is attached to both face selection surfaces. Data includes Label, all present configured values, formatted variance, textual status, and every Tooltips-bucket projection. Display names and formats come from the Power BI metadata source. Flip buttons do not own tooltip handlers and therefore cannot trigger accidental selection or tooltip duplication.
+
+## Accessibility and responsive behavior
+
+Native buttons provide Enter/Space activation. Only controls on the visible face participate in tab order; the hidden face is marked `aria-hidden`. Selection and flip controls expose pressed state and descriptive labels, while a visually hidden summary contains label, value, variance, and status.
+
+Power BI high-contrast mode replaces authored background, foreground, border, status, and link/button colors with the host palette. Status always includes text and a symbol. CSS uses a root namespace, container-relative type sizing, compact/tiny viewport classes, two-line label clamping, and overflow-safe detail rows. `prefers-reduced-motion` disables the transform transition.
+
+## Testing strategy
+
+Vitest runs in jsdom with typed Power BI host, event-service, selection-manager, identity, and tooltip mocks.
+
+- `kpi.test.ts`: priority, fallback, both directions, three statuses, tolerance, negative references, and zero division.
+- `data.test.ts`: all/required-only fields, optionals, tooltips, formatting metadata, category identity behavior, blank/invalid/non-finite inputs, and variance modes.
+- `settings.test.ts`: production defaults, persisted properties, validators through the model, and all Format pane cards.
+- `renderer.test.ts`: safe DOM structure, hidden sections, face tab order, ARIA, status text, and high contrast.
+- `visual.test.ts`: selection/multi-select/clear/restore, flip isolation and persistence, context menus, tooltip contents, empty states, viewport classes, rendering events, formatting model, and cleanup.
+- `style.test.ts`: root scoping, compact/tiny behavior, overflow handling, and reduced-motion rules.
+
+The test suite deliberately exercises observable behavior; it contains no trivial assertions.
+
+## Build and release process
+
+Use Node.js 24 LTS and npm 11:
+
+```powershell
+cd flipCardVisual
+npm ci
+npm run lint
+npm run typecheck
+npm test
+npm run build:prod
+npm run package
 ```
 
-The goal is not only to build a card that flips.
+Dependencies are exact versions in `package.json` and resolved by `package-lock.json`. `powerbi-visuals-tools` is local, so scripts never rely on a global `pbiviz`. Generated dependencies, `.tmp`, `dist`, reports, certificates, and editor state are ignored.
 
-The goal is to build a flexible KPI super-visual that can start simple and grow into a richer interactive card experience.
+The Power BI development server currently brings `uuid` through `sockjs`; an exact `11.1.1` npm override keeps that tooling-only chain on the advisory-fixed CommonJS-compatible release.
 
----
+The GitHub Actions workflow repeats install, lint, type-check, tests, production build, and packaging on pushes and pull requests, then uploads the `.pbiviz` artifact.
 
-## Product Principles
+For a release:
 
-This project follows these principles:
+1. Update npm/package and four-part visual versions consistently.
+2. Update `CHANGELOG.md` and user documentation.
+3. Run the complete verification matrix from a clean checkout.
+4. Inspect the packaged filename and archive contents.
+5. Smoke-test the package in Power BI Desktop before distributing it.
 
-* The visual should work first as a simple, stable KPI card.
-* Advanced features should be optional.
-* Flip behavior should be optional.
-* Multi-card behavior should be optional.
-* Selection/filtering behavior should be optional.
-* Formatting pane settings should allow users to customize the visual without coding.
-* Features should be built as modes, not separate forks.
-* New features should not break existing working behavior.
-* The visual should be useful for real dashboards, portfolio projects, and professional reporting.
-* Stability and learning are more important than rushing.
+## Important decisions
 
-Important product mindset:
+- The original GUID and existing data-role identifiers are retained to avoid breaking saved reports.
+- Single-card behavior is primary; the historical category grid is retained only when Label produces multiple identities.
+- Flip state belongs to stable card instances rather than update calls.
+- Expected author states are rendered messages, not rendering failures.
+- Selection and flipping use separate controls to eliminate ambiguous body clicks.
+- The supported `--all-locales` Power BI tools flag works around an upstream ES-module locale-pruning incompatibility in formatting utilities 7.0.0.
+- Export reliability favors complete synchronous DOM rendering before `renderingFinished`; no delayed animation callback gates the host lifecycle.
 
-```plaintext
-Do not build only a cool flip animation.
-Build a practical smart KPI card visual where flip is one optional feature.
-```
+## Optional future enhancements
 
-Important future interaction rule:
-
-```plaintext
-Flip behavior = optional
-Selection/filter behavior = optional
-Maybe separate click targets later
-Example: whole card flips, small icon/filter area selects
-```
-
----
-
-## Main Goal
-
-Create a reusable Power BI custom visual where:
-
-* A card can behave like a normal KPI card.
-* A card can optionally flip when clicked.
-* The front face shows a main KPI.
-* The back face shows a detail KPI.
-* Category labels such as Vendor, Team, Agent, or Call Driver can be shown.
-* Power BI measure formatting is respected.
-* Multiple cards can be rendered from category rows.
-* Clicking a card can select the related Power BI category value.
-* Clicking the selected card again can clear the selection.
-* Selected state has visible border/glow feedback.
-* Back-face clicks can return a card to the front without changing the filter.
-* Users can later customize content, layout, colors, typography, borders, animation, and interactions through the formatting pane.
-
----
-
-## Current Status
-
-The visual is currently a stable multi-card-capable flip card visual.
-
-Phase 4.7 layout stabilization is complete.
-
-Phase 4.8 formatting pane foundation has started, but it is not complete.
-
-The first attempted formatting pane setting was:
-
-```plaintext
-Interactions > Enable flip
-```
-
-Current result:
-
-```plaintext
-The visual can still render.
-The Format visual pane does not show the expected Interactions card yet.
-The first formatting pane setting is not verified.
-Phase 4.8 should be treated as in-progress and needs diagnosis before adding more settings.
-```
-
-Current tested status before Phase 4.8 work:
-
-```plaintext
-Single-card visual works.
-Multi-card visual works.
-Card resizes correctly.
-Cards flip correctly.
-Power BI filtering works when a front-facing card is clicked.
-Clicking another card moves the filter to that card.
-Clicking the selected front-facing card again clears selection.
-Clicking a back-facing card flips it to the front without changing the filter.
-Selected border/glow feedback works.
-Values and percentage formatting work.
-Empty state works.
-Flip and selection logic are separated into helpers.
-Internal feature gates for flip and selection are prepared.
-onCardClick() is clean and easier to maintain.
-Multi-card grid layout works.
-Compact multi-card styling works.
-Vertical scrolling for many cards works.
-Narrow-width layout safety works.
-```
-
-Current Phase 4.8 status:
-
-```plaintext
-Formatting pane foundation is being prepared.
-An initial Enable Flip setting was attempted.
-The Interactions card is not appearing in the Format visual pane yet.
-No additional formatting settings should be added until this is diagnosed.
-```
-
-Important Power BI Desktop note:
-
-```plaintext
-The Visualizations pane has separate areas:
-
-Build visual = field wells and data binding
-Format visual = paintbrush icon where formatting settings appear
-
-The user already checked the Format visual pane, and Interactions was not visible.
-```
-
----
-
-## Current Field Wells
-
-```plaintext
-Card Label   -> Category shown on the card, such as Vendor, Agent, Team, or Call Driver
-Card Value   -> Main measure shown on the front face
-Detail Value -> Detail measure shown on the back face
-```
-
-Example setup:
-
-```plaintext
-Card Label   = Vendor
-Card Value   = Total Calls
-Detail Value = CSAT %
-```
-
-Example front card:
-
-```plaintext
-HGS
-Total Calls
-16.63K
-Click card to view details
-```
-
-Example back card:
-
-```plaintext
-HGS
-CSAT %
-85.8%
-Front value: 16.63K
-```
-
----
-
-## Current Code Pattern
-
-The current `visual.ts` structure supports controlled multi-card rendering and cleaner card interaction flow.
-
-Current mental model:
-
-```plaintext
-Power BI sends data
-↓
-update() receives the update
-↓
-resizeCard() sizes the visual container from Power BI viewport
-↓
-getCategoryRowCount() checks available category rows
-↓
-createCardInstances(dataView, rowCount) creates the card instance list
-↓
-For each row:
-    getCardDataForRow() creates card data
-    createCardElements() creates card DOM elements for additional rows
-    createCardInstanceForRow() groups data + DOM
-    attachCardClickBehavior() attaches click behavior
-↓
-rebuildCardContainer(cardInstances) clears and rebuilds the card container
-↓
-renderCard(cardInstance) renders each card
-↓
-onCardClick(event, cardInstance) controls the click flow
-↓
-getCardElementsForClick(cardInstance) finds the clicked card elements
-↓
-handleCardFlip(cardElements) handles flip behavior if enabled
-↓
-shouldHandleCardSelection(wasFlipped, cardInstance) decides if selection should happen
-↓
-handleCardSelection(cardInstance) handles Power BI selection/filtering
-```
-
-Main helper groups inside `visual.ts`:
-
-```plaintext
-Card types
-Constructor and update flow
-Layout and state helpers
-Data preparation helpers
-Card creation helpers
-Card rendering helpers
-Card interaction helpers
-Power BI lookup and formatting helpers
-Formatting pane foundation
-```
-
-Important learning concept:
-
-```plaintext
-One function should have one main job.
-```
-
----
-
-## Current DOM Structure
-
-The visual can render multiple cards inside a container.
-
-```plaintext
-target
-└── flip-card-container
-    ├── flip-card-wrapper
-    │   └── flip-card-inner
-    │       ├── flip-card-front
-    │       └── flip-card-back
-    ├── flip-card-wrapper
-    │   └── flip-card-inner
-    │       ├── flip-card-front
-    │       └── flip-card-back
-    └── ...
-```
-
-The number of cards depends on category rows from Power BI.
-
----
-
-## Current TypeScript Shapes
-
-### CardData
-
-Represents the information shown on the card.
-
-```plaintext
-CardData
-├── label
-├── frontTitle
-├── frontValue
-├── frontSubtitle
-├── backTitle
-├── backValue
-├── backSubtitle
-└── selectionId
-```
-
-### CardDomElements
-
-Groups all DOM elements belonging to one card.
-
-```plaintext
-CardDomElements
-├── wrapper
-├── inner
-├── frontLabel
-├── frontTitle
-├── frontValue
-├── frontSubtitle
-├── backLabel
-├── backTitle
-├── backValue
-└── backSubtitle
-```
-
-### CardInstance
-
-Combines card data and card DOM.
-
-```plaintext
-CardInstance
-├── data
-└── elements
-```
-
----
-
-## Current Interaction Flow
-
-```plaintext
-Click card
-↓
-Stop event bubbling
-↓
-Resolve card elements
-↓
-Handle flip if enabled
-↓
-If card was back-facing before the click:
-    stop here and do not change Power BI filter
-↓
-If card was front-facing and selection is enabled:
-    select, move selection, or clear selection
-```
-
-Current rule:
-
-```plaintext
-Front-facing click can filter/select.
-Back-facing click only flips back to the front.
-```
-
-Future rule:
-
-```plaintext
-Flip and selection should become separately configurable.
-```
-
----
-
-## Current Layout Flow
-
-```plaintext
-Single-card mode
-↓
-Use full visual area
-↓
-Use larger card styling
-↓
-Keep overflow hidden
-
-Multi-card mode
-↓
-Use grid layout
-↓
-Use compact card styling
-↓
-Allow vertical scrolling only when needed
-↓
-Prevent horizontal scrolling
-↓
-Use narrow-width safety rules when visual is very small
-```
-
----
-
-## Current Known Limitations
-
-The project is stable for the current tested phase, but it is still early-stage.
-
-Known limitations:
-
-* Multi-card layout is improved, but not user-configurable yet.
-* Selection behavior is still simple and single-select.
-* Ctrl / Meta multi-select is not handled yet.
-* Flip behavior and Power BI selection still share the same card click, but their logic is now separated internally.
-* Flip behavior has an internal feature gate.
-* Selection/filtering behavior has an internal feature gate.
-* Formatting pane foundation is in progress.
-* The first attempted formatting pane card, `Interactions`, is not appearing yet.
-* No formatting pane setting should be considered complete yet.
-* There are no separate click targets yet.
-* Card colors, gradients, typography, spacing, and borders are still mostly hardcoded.
-* Conditional formatting is not implemented yet.
-* KPI states, targets, variance, and trend indicators are not implemented yet.
-* Tooltips are not implemented yet.
-* Context menu support is not implemented yet.
-* Keyboard navigation is not implemented yet.
-* High contrast support is not implemented yet.
-* Localization is not implemented yet.
-* Metadata, release hygiene, sample PBIX, and certification-readiness still need future cleanup.
-
-Reminder:
-
-```plaintext
-These are not failures.
-They are the roadmap.
-```
-
----
-
-## Current Formatting Pane Status
-
-Phase 4.8 has started but is not complete.
-
-Current intended first formatting pane setting:
-
-```plaintext
-Interactions > Enable flip
-```
-
-Current actual result:
-
-```plaintext
-The user checked the Format visual pane.
-Only default/general formatting groups were visible.
-Interactions was not visible.
-Enable flip was not visible.
-```
-
-Important rule:
-
-```plaintext
-Do not add more formatting pane settings until the first one is diagnosed and working.
-```
-
-Possible areas to inspect next:
-
-```plaintext
-capabilities.json object/property names
-settings.ts card/slice names
-visual.ts getFormattingModel() method
-visual.ts formatting settings service declaration
-visual.ts formatting settings service initialization
-visual.ts update() populateFormattingSettingsModel call
-Whether the pbiviz package imported into Power BI Desktop is the latest built package
-Whether Power BI Desktop is using the newly imported visual version
-```
-
----
-
-## Build Command
-
-Run this from the visual project folder:
-
-```bash
-cd "C:\Power BI Custom Visual\PowerBI-FlipCard\flipCardVisual"
-pbiviz package
-```
-
-Expected successful result:
-
-```plaintext
-Lint check completed.
-Package created!
-Build completed successfully.
-```
-
-Some warnings may currently appear and are not blocking yet:
-
-* `pwsh is not recognized`
-* Formatting pane recommendations
-* High contrast recommendations
-* Keyboard navigation recommendations
-* Tooltip recommendations
-
-Known note:
-
-```plaintext
-The pwsh warning is not the same as a TypeScript build error.
-If pbiviz package shows TypeScript errors, those must be fixed before the package is considered successful.
-```
-
----
-
-## Git Workflow
-
-Use this after every successful tested milestone:
-
-```bash
-cd "C:\Power BI Custom Visual\PowerBI-FlipCard"
-
-git status
-git diff
-git add .
-git commit -m "Your milestone message here"
-git push
-git status
-```
-
-Expected clean result:
-
-```plaintext
-nothing to commit, working tree clean
-```
-
-Recommended commit title if committing only documentation:
-
-```bash
-git commit -m "Update docs for formatting pane foundation"
-```
-
-Recommended commit title if committing the current Phase 4.8 code attempt:
-
-```bash
-git commit -m "Start formatting pane foundation"
-```
-
-Do not use this commit title yet:
-
-```bash
-git commit -m "Add enable flip formatting setting"
-```
-
-That title should only be used after `Interactions > Enable flip` appears in the Format visual pane and the on/off behavior is tested.
-
----
-
-## Next Session Starting Point
-
-When continuing this project, first inspect:
-
-```plaintext
-README.md
-docs/DEVELOPMENT_LOG.md
-flipCardVisual/src/visual.ts
-flipCardVisual/src/settings.ts
-flipCardVisual/style/visual.less
-flipCardVisual/capabilities.json
-flipCardVisual/package.json
-flipCardVisual/pbiviz.json
-```
-
-Then confirm:
-
-```bash
-git status
-git diff
-```
-
-Current focus:
-
-```plaintext
-Continue Phase 4.8 — Formatting Pane Foundation.
-Do not assume the formatting pane setting is complete.
-The Interactions card is currently not appearing in the Format visual pane.
-```
-
-Immediate next diagnostic:
-
-```plaintext
-Diagnose why Interactions > Enable flip does not appear under:
-Visualizations pane -> Format visual / paintbrush icon
-```
-
-Current tested baseline before formatting pane work:
-
-```plaintext
-Single-card visual works.
-Multi-card visual works.
-Card resizes correctly.
-Cards flip correctly.
-Power BI filtering works when a front-facing card is clicked.
-Clicking another card moves the filter to that card.
-Clicking the selected front-facing card again clears selection.
-Clicking a back-facing card flips it to the front without changing the filter.
-Selected border/glow feedback works.
-Values and percentage formatting work.
-Empty state works.
-Flip and selection logic are separated into helpers.
-Internal feature gates for flip and selection are prepared.
-onCardClick() is clean and easier to maintain.
-Multi-card grid layout works.
-Compact multi-card styling works.
-Vertical scrolling for many cards works.
-Narrow-width layout safety works.
-```
-
-Latest known direction:
-
-```plaintext
-The next step is still Phase 4.8 — Prepare Formatting Pane Foundation.
-
-Important:
-Do not jump directly into a full formatting pane redesign.
-Do not wire many settings at once.
-Do not combine unrelated changes like formatting pane, selection-state redesign, click target redesign, and layout redesign in one big step.
-Do not suggest full-file replacements unless explicitly requested.
-The next steps should still keep the visual stable.
-Always remember the long-term goal: this should become a flexible one-stop-shop smart KPI card visual, not only a flip card.
-Future rule: flip behavior and selection/filtering behavior should become separate optional features.
-```
+- Localized authoring and empty-state strings.
+- Configurable multi-card grid columns and card height.
+- A sample PBIX and automated screenshot regression fixtures.
+- Trend/sparkline data roles.
+- AppSource certification work, including certification-specific lint and marketplace assets.

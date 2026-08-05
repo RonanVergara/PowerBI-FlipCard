@@ -1,69 +1,231 @@
 {
-    "privileges": [],
-    "dataRoles": [
-        {
-            "displayName": "Card Label",
-            "name": "cardLabel",
-            "kind": "Grouping"
-        },
-        {
-            "displayName": "Card Value",
-            "name": "cardValue",
-            "kind": "Measure"
-        },
-        {
-            "displayName": "Detail Value",
-            "name": "detailValue",
-            "kind": "Measure"
-        }
-    ],
-    "dataViewMappings": [
-        {
-            "conditions": [
-                {
-                    "cardLabel": {
-                        "max": 1
-                    },
-                    "cardValue": {
-                        "max": 1
-                    },
-                    "detailValue": {
-                        "max": 1
-                    }
-                }
-            ],
-            "categorical": {
-                "categories": {
-                    "for": {
-                        "in": "cardLabel"
-                    }
-                },
-                "values": {
-                    "select": [
-                        {
-                            "bind": {
-                                "to": "cardValue"
-                            }
-                        },
-                        {
-                            "bind": {
-                                "to": "detailValue"
-                            }
-                        }
-                    ]
-                }
-            }
-        }
-    ],
-    "objects": {
-        "interactions": {
-            "properties": {
-                "enableFlip": {
-                    "type": {
-                        "bool": true
-                    }
-                }
-            }
-        }
+  "privileges": [],
+  "dataRoles": [
+    {
+      "displayName": "Label",
+      "name": "cardLabel",
+      "kind": "Grouping",
+      "description": "Optional category or grouping shown as the KPI label."
+    },
+    {
+      "displayName": "Card Value",
+      "name": "cardValue",
+      "kind": "Measure",
+      "description": "Required main KPI value shown on the front.",
+      "requiredTypes": [{ "numeric": true }, { "integer": true }]
+    },
+    {
+      "displayName": "Detail Value",
+      "name": "detailValue",
+      "kind": "Measure",
+      "description": "Optional supporting value shown on the back.",
+      "requiredTypes": [{ "numeric": true }, { "integer": true }]
+    },
+    {
+      "displayName": "Comparison Value",
+      "name": "comparisonValue",
+      "kind": "Measure",
+      "description": "Optional comparison used for change and variance.",
+      "requiredTypes": [{ "numeric": true }, { "integer": true }]
+    },
+    {
+      "displayName": "Target Value",
+      "name": "targetValue",
+      "kind": "Measure",
+      "description": "Optional target used to evaluate KPI attainment.",
+      "requiredTypes": [{ "numeric": true }, { "integer": true }]
+    },
+    {
+      "displayName": "Tooltips",
+      "name": "tooltips",
+      "kind": "GroupingOrMeasure",
+      "description": "Additional fields included in the native Power BI tooltip."
     }
+  ],
+  "dataViewMappings": [
+    {
+      "conditions": [
+        {
+          "cardLabel": { "max": 1 },
+          "cardValue": { "min": 1, "max": 1 },
+          "detailValue": { "max": 1 },
+          "comparisonValue": { "max": 1 },
+          "targetValue": { "max": 1 },
+          "tooltips": { "max": 20 }
+        }
+      ],
+      "categorical": {
+        "categories": {
+          "for": { "in": "cardLabel" }
+        },
+        "values": {
+          "select": [
+            { "bind": { "to": "cardValue" } },
+            { "bind": { "to": "detailValue" } },
+            { "bind": { "to": "comparisonValue" } },
+            { "bind": { "to": "targetValue" } },
+            { "for": { "in": "tooltips" } }
+          ]
+        }
+      }
+    }
+  ],
+  "objects": {
+    "cardAppearance": {
+      "displayName": "Card appearance",
+      "properties": {
+        "frontBackground": { "displayName": "Front background", "type": { "fill": { "solid": { "color": true } } } },
+        "backBackground": { "displayName": "Back background", "type": { "fill": { "solid": { "color": true } } } },
+        "borderColor": { "displayName": "Border color", "type": { "fill": { "solid": { "color": true } } } },
+        "borderWidth": { "displayName": "Border width", "type": { "numeric": true } },
+        "cornerRadius": { "displayName": "Corner radius", "type": { "numeric": true } },
+        "shadow": { "displayName": "Shadow", "type": { "bool": true } },
+        "accentColor": { "displayName": "Accent color", "type": { "fill": { "solid": { "color": true } } } },
+        "padding": { "displayName": "Internal padding", "type": { "numeric": true } }
+      }
+    },
+    "label": {
+      "displayName": "Label",
+      "properties": {
+        "show": { "displayName": "Show", "type": { "bool": true } },
+        "fontFamily": { "displayName": "Font family", "type": { "formatting": { "fontFamily": true } } },
+        "fontSize": { "displayName": "Font size", "type": { "formatting": { "fontSize": true } } },
+        "fontColor": { "displayName": "Font color", "type": { "fill": { "solid": { "color": true } } } },
+        "bold": { "displayName": "Bold", "type": { "bool": true } },
+        "alignment": {
+          "displayName": "Alignment",
+          "type": { "enumeration": [
+            { "displayName": "Left", "value": "left" },
+            { "displayName": "Center", "value": "center" },
+            { "displayName": "Right", "value": "right" }
+          ] }
+        },
+        "wrap": { "displayName": "Text wrapping", "type": { "bool": true } }
+      }
+    },
+    "mainValue": {
+      "displayName": "Main value",
+      "properties": {
+        "fontFamily": { "displayName": "Font family", "type": { "formatting": { "fontFamily": true } } },
+        "fontSize": { "displayName": "Font size", "type": { "formatting": { "fontSize": true } } },
+        "fontColor": { "displayName": "Font color", "type": { "fill": { "solid": { "color": true } } } },
+        "bold": { "displayName": "Bold", "type": { "bool": true } },
+        "alignment": {
+          "displayName": "Alignment",
+          "type": { "enumeration": [
+            { "displayName": "Left", "value": "left" },
+            { "displayName": "Center", "value": "center" },
+            { "displayName": "Right", "value": "right" }
+          ] }
+        },
+        "displayUnits": { "displayName": "Display units", "type": { "formatting": { "labelDisplayUnits": true } } },
+        "decimalPlaces": {
+          "displayName": "Decimal places",
+          "type": { "enumeration": [
+            { "displayName": "Auto", "value": "auto" },
+            { "displayName": "0", "value": "0" },
+            { "displayName": "1", "value": "1" },
+            { "displayName": "2", "value": "2" },
+            { "displayName": "3", "value": "3" },
+            { "displayName": "4", "value": "4" }
+          ] }
+        }
+      }
+    },
+    "detailValues": {
+      "displayName": "Detail values",
+      "properties": {
+        "showDetail": { "displayName": "Show detail", "type": { "bool": true } },
+        "showComparison": { "displayName": "Show comparison", "type": { "bool": true } },
+        "showTarget": { "displayName": "Show target", "type": { "bool": true } },
+        "showVariance": { "displayName": "Show variance", "type": { "bool": true } },
+        "fontFamily": { "displayName": "Font family", "type": { "formatting": { "fontFamily": true } } },
+        "fontSize": { "displayName": "Font size", "type": { "formatting": { "fontSize": true } } },
+        "labelColor": { "displayName": "Label color", "type": { "fill": { "solid": { "color": true } } } },
+        "valueColor": { "displayName": "Value color", "type": { "fill": { "solid": { "color": true } } } },
+        "displayUnits": { "displayName": "Display units", "type": { "formatting": { "labelDisplayUnits": true } } },
+        "decimalPlaces": {
+          "displayName": "Decimal places",
+          "type": { "enumeration": [
+            { "displayName": "Auto", "value": "auto" },
+            { "displayName": "0", "value": "0" },
+            { "displayName": "1", "value": "1" },
+            { "displayName": "2", "value": "2" },
+            { "displayName": "3", "value": "3" },
+            { "displayName": "4", "value": "4" }
+          ] }
+        },
+        "spacing": { "displayName": "Spacing", "type": { "numeric": true } }
+      }
+    },
+    "kpiStatus": {
+      "displayName": "KPI status",
+      "properties": {
+        "show": { "displayName": "Show status", "type": { "bool": true } },
+        "direction": {
+          "displayName": "Preferred direction",
+          "type": { "enumeration": [
+            { "displayName": "Higher values are better", "value": "higher" },
+            { "displayName": "Lower values are better", "value": "lower" }
+          ] }
+        },
+        "tolerance": { "displayName": "Neutral tolerance (%)", "type": { "numeric": true } },
+        "positiveColor": { "displayName": "Positive color", "type": { "fill": { "solid": { "color": true } } } },
+        "neutralColor": { "displayName": "Neutral color", "type": { "fill": { "solid": { "color": true } } } },
+        "negativeColor": { "displayName": "Negative color", "type": { "fill": { "solid": { "color": true } } } },
+        "varianceMode": {
+          "displayName": "Variance display",
+          "type": { "enumeration": [
+            { "displayName": "Absolute", "value": "absolute" },
+            { "displayName": "Percentage", "value": "percentage" },
+            { "displayName": "Both", "value": "both" }
+          ] }
+        },
+        "conditionalTarget": {
+          "displayName": "Conditional color target",
+          "type": { "enumeration": [
+            { "displayName": "Status indicator only", "value": "indicator" },
+            { "displayName": "Accent and border", "value": "accent" },
+            { "displayName": "Main value", "value": "mainValue" },
+            { "displayName": "Card background", "value": "background" }
+          ] }
+        }
+      }
+    },
+    "flipBehavior": {
+      "displayName": "Flip behavior",
+      "properties": {
+        "showButton": { "displayName": "Show flip button", "type": { "bool": true } },
+        "position": {
+          "displayName": "Button position",
+          "type": { "enumeration": [
+            { "displayName": "Top left", "value": "topLeft" },
+            { "displayName": "Top right", "value": "topRight" },
+            { "displayName": "Bottom left", "value": "bottomLeft" },
+            { "displayName": "Bottom right", "value": "bottomRight" }
+          ] }
+        },
+        "size": { "displayName": "Button size", "type": { "numeric": true } },
+        "buttonColor": { "displayName": "Button icon color", "type": { "fill": { "solid": { "color": true } } } },
+        "buttonBackground": { "displayName": "Button background", "type": { "fill": { "solid": { "color": true } } } },
+        "animationDuration": { "displayName": "Animation duration (ms)", "type": { "numeric": true } },
+        "defaultFace": {
+          "displayName": "Default face",
+          "type": { "enumeration": [
+            { "displayName": "Front", "value": "front" },
+            { "displayName": "Back", "value": "back" }
+          ] }
+        }
+      }
+    }
+  },
+  "tooltips": {
+    "supportedTypes": { "default": true, "canvas": true },
+    "roles": ["tooltips"],
+    "supportEnhancedTooltips": true
+  },
+  "supportsEmptyDataView": true,
+  "supportsLandingPage": true,
+  "supportsKeyboardFocus": true,
+  "supportsMultiVisualSelection": true
 }

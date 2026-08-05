@@ -1,15 +1,36 @@
-# Node
+# Dependencies
 node_modules/
 
-# Power BI build files
+# Power BI build output
 dist/
 .tmp/
-
-# Build reports
+drop/
+*.pbiviz
 webpack.statistics*.html
 
-# VS Code
-.vscode/
+# Test and tool output
+coverage/
+.nyc_output/
+.cache/
+.eslintcache
+test-results/
 
-# Logs
+# Local development certificates
+*.pfx
+*.p12
+*.cer
+*.crt
+*.key
+*.pem
+
+# Editor and operating-system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs and local environment files
 *.log
+.env
+.env.*
+!.env.example
