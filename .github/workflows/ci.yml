@@ -21,7 +21,7 @@ jobs:
       - name: Use Node.js 24 LTS
         uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: flipCardVisual/package-lock.json
 
@@ -36,6 +36,22 @@ jobs:
 
       - name: Test
         run: npm test
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Browser visual tests
+        run: npm run test:visual
+
+      - name: Upload browser diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-diagnostics
+          path: |
+            flipCardVisual/playwright-report
+            flipCardVisual/test-results
+          if-no-files-found: ignore
 
       - name: Build production resources
         run: npm run build:prod
