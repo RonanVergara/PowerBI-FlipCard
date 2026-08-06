@@ -1,131 +1,74 @@
-# Smart KPI Flip Card — Technical Notes
+# Smart KPI Flip Card 1.1.0 — Development Log
 
-This document describes the implementation of production release 1.0.0. It is an architecture and maintenance reference, not a duplicate of the end-user README.
+## Product contract
+
+The authoritative principle is “simple, stable KPI card first.” Card Value is the sole required role. Benchmark, Flip, Multiple cards, and selection are optional layers. Version 1.1.0 intentionally defaults to strict Single without unreliable legacy-instance detection. GUID, author, MIT license, role names, bindings, and category-driven multi-card capability remain unchanged.
 
 ## Architecture
 
-The visual keeps host orchestration separate from data and presentation logic:
-
 | Module | Responsibility |
 | --- | --- |
-| `src/visual.ts` | Power BI lifecycle, formatting population, stable card instances, selection, context menus, tooltips, viewport state, and rendering events. |
-| `src/data.ts` | Categorical role lookup, row extraction, validation, display names, selection identities, and stable keys. |
-| `src/kpi.ts` | Pure benchmark, tolerance, status, and variance calculations. |
-| `src/valueFormatting.ts` | Power BI value formatting, signed variance text, zero-reference handling, and tooltip item composition. |
-| `src/renderer.ts` | Safe DOM creation, card-face rendering, conditional styling, ARIA state, and high-contrast colors. |
-| `src/settings.ts` | Formatting-model cards, slices, defaults, enumerations, and validators. |
-| `src/types.ts` | Shared domain types and view models. |
-| `style/visual.less` | Root-scoped layout, responsive behavior, focus styles, flip animation, and reduced-motion override. |
+| `src/data.ts` | Role extraction, all-row preservation, validation, model formatting, identities, stable keys, and row/static conditional colors. |
+| `src/layout.ts` | Pure Single/Auto/Multiple Fit/Fixed calculations, safety sizes, density, dimensions, columns, and overflow policy. |
+| `src/kpi.ts` | Target/comparison priority, tolerance, direction, signed variance, negative/zero-reference safety. |
+| `src/valueFormatting.ts` | Culture/model/display-unit formatting, variance text, and feature-gated native tooltip content. |
+| `src/settings.ts` | Seven Format cards, progressive visibility, raw-object migration precedence, and identity-aware `ConstantOrRule` containers. |
+| `src/renderer.ts` | Fresh safe DOM, meaningful optional sections, final color resolution, inert faces, ARIA, and high contrast. |
+| `src/visual.ts` | State precedence, face-state reconciliation, atomic rendering, host interactions, tooltips, context menus, and lifecycle events. |
 
-No user-provided content is inserted with `innerHTML`; rendering uses created nodes and `textContent`.
+## Authoritative state and identity
 
-## Data flow
+Every update evaluates first-match state precedence: missing Card Value → no data → invalid value → configuration required → too small → ready. Only ready contains `.flip-card-wrapper` DOM. Each render replaces the container with a state element or fresh ready fragment, so landing DOM cannot survive a data transition.
 
-1. `Visual.update()` starts the host rendering lifecycle and populates formatting settings from the current `DataView`.
-2. Viewport classes and the very-small state are evaluated before extraction.
-3. `extractDataView()` finds columns by their stable role identifiers, validates values, formats them with source metadata and locale, creates category identities where possible, and calculates KPI results.
-4. Presentation preparation formats variance and composes native tooltip items.
-5. `renderCards()` reconciles DOM instances by stable selection key. Existing identities retain face state; changed identities start at Default Face.
-6. The renderer applies content, section visibility, CSS variables, conditional color, and accessibility state.
-7. Host selection state is reapplied, then rendering finishes exactly once. Unexpected exceptions signal `renderingFailed` and are rethrown.
+`Map<stableIdentity, front | back>` is authoritative; DOM is disposable. Otherwise-ready data is reconciled before too-small evaluation. Too-small removes all card DOM and event/tooltip surfaces while keeping reconciled identities and face values. Recovery rebuilds the DOM. Missing/no-data/invalid/configuration prune the face map. Card count never causes too-small; Fit may vertically scroll many cards.
 
-Without a Label category, extraction intentionally uses only the first Card Value row. With Label, one instance is produced per category row for backward compatibility.
+## Modes and layout precedence
 
-## Formatting model
+- Single accepts at most one category row and fills the viewport, ignoring all multi-card dimensions.
+- Auto uses single presentation for one row and selected Fit/Fixed grid behavior for multiple identified rows.
+- Multiple requires Label and applies Fit/Fixed to one or more rows. Multiple Fixed honors configured dimensions even for one row.
+- Fit treats 160×110 as preferred, uses feature-aware safety sizes, evaluates columns, compacts before vertical scrolling, and never overflows horizontally.
+- Fixed intentionally honors width/height and may scroll in either direction.
+- Manual column calculation is called Custom; it reduces requested Fit columns when required to prevent horizontal overflow.
 
-`VisualFormattingSettingsModel` contains six `SimpleCard` classes whose names and slice names match `capabilities.json`. `FormattingSettingsService.populateFormattingSettingsModel()` runs during every update, including formatting-only updates. `getFormattingModel()` returns `buildFormattingModel()` directly.
+## Migration precedence
 
-Dropdown values are stable string enums. Numeric controls have formatting-model validators. Decimal precision defaults to `Auto` (`undefined` at the formatter boundary), preserving model precision and formats. Power BI SDK package 5.11.1 exposes API version 5.11.0, which is the value stored in `pbiviz.json`.
+Migration inspects own properties on raw `dataView.metadata.objects`:
 
-## KPI rules
+| Priority | Condition | Result |
+| --- | --- | --- |
+| 1 | New property explicitly saved | New property wins. |
+| 2 | New absent; compatible legacy property explicitly saved | Map only that saved value. |
+| 3 | Neither saved | Use the neutral 1.1.0 default. |
 
-- Valid Target has first priority for status; otherwise valid Comparison; otherwise no benchmark.
-- Valid Comparison has first priority for variance; otherwise valid Target.
-- Absolute variance is value minus variance reference.
-- Percentage variance divides by `abs(reference)`, so negative references retain an intuitive denominator while absolute variance remains signed.
-- A zero reference makes percentage variance unavailable instead of producing infinity.
-- Neutral tolerance is `abs(status reference) × tolerance percent / 100`.
-- Direction controls favorable sign only. Equality and differences within tolerance are neutral.
-- Invalid optional fields are not calculation inputs. Invalid Target can therefore fall back to Comparison.
+If both legacy flip switches were saved, `flipBehavior.showButton` precedes `interactions.enableFlip`. Explicit `kpiStatus.show` may enable Benchmark. Legacy class defaults, Detail bindings, and Default Face never enable a feature. No legacy multi-card mode exists, so absent new metadata remains strict Single.
 
-## Selection and flip state
+## Native conditional formatting
 
-The selection surface and flip control are sibling native buttons. Their event handlers are attached once when an identity-keyed card instance is created.
+The exact five capability, formatting-model, lookup, test, and documentation paths are:
 
-- Selection uses `select(identity, ctrlKey || metaKey)` and `clear()` for a sole selected identity clicked again.
-- `registerOnSelectCallback()` and `getSelectionIds()` restore styling after host updates.
-- Root blank-space clicks clear selection.
-- Flip buttons stop propagation and update only local face state.
-- Changing Default Face resets retained instances. Hiding the button returns instances to the configured default.
-- A category-less card has no selection identity and makes no invalid host calls.
+1. `cardAppearance.frontBackground`
+2. `cardAppearance.borderColor`
+3. `cardAppearance.accentColor`
+4. `mainValue.fontColor`
+5. `benchmark.statusIndicatorColor`
 
-Right-click routes through `showContextMenu()` with either the card identity or an empty visual context. Browser context menus are suppressed inside the visual.
+Each slice calls `dataViewWildcard.createDataViewWildcardSelector` with InstancesAndTotals, sets `altConstantSelector`, and uses instance kind `ConstantOrRule`; the formatting utility emits `descriptor.altConstantValueSelector`. Categorized alternate selectors come from `selectionId.getSelector()` and identity-less cards use `{}`. Runtime resolution is category-row objects → value-column row objects → explicit metadata constant → neutral/automatic fallback. High contrast substitutes after resolution. Clearing a rule therefore exposes the static constant without retained renderer state.
 
-## Native tooltips
+## Flip and interactions
 
-`powerbi-visuals-utils-tooltiputils` is attached to both face selection surfaces. Data includes Label, all present configured values, formatted variance, textual status, and every Tooltips-bucket projection. Display names and formats come from the Power BI metadata source. Flip buttons do not own tooltip handlers and therefore cannot trigger accidental selection or tooltip duplication.
+A back face exists only when Flip is enabled and valid Detail or enabled valid Benchmark content exists. The front selection surface and flip button are siblings. The back is not a selection surface: its background and dedicated button return to Front. Flip events stop propagation.
 
-## Accessibility and responsive behavior
+Inactive faces receive `aria-hidden`, `inert`, `tabIndex=-1` on controls, and `pointer-events:none`. Focus moves to the visible counterpart. Native buttons supply mouse, touch, Enter, and Space activation. Disabling Flip or losing content reconciles Front; stable identities retain face through resize/format/tiny recovery; changed identities start Front.
 
-Native buttons provide Enter/Space activation. Only controls on the visible face participate in tab order; the hidden face is marked `aria-hidden`. Selection and flip controls expose pressed state and descriptive labels, while a visually hidden summary contains label, value, variance, and status.
+Selection calls require enabled selection, host interactions, and category identity. Sole-click clear, Ctrl/Cmd multi-select, blank clear, native context menu, tooltip wrapper, selection callback/restoration, and rendering lifecycle remain in the host orchestration layer.
 
-Power BI high-contrast mode replaces authored background, foreground, border, status, and link/button colors with the host palette. Status always includes text and a symbol. CSS uses a root namespace, container-relative type sizing, compact/tiny viewport classes, two-line label clamping, and overflow-safe detail rows. `prefers-reduced-motion` disables the transform transition.
+## Validation strategy
 
-## Testing strategy
+Vitest/jsdom tests assert observable DOM, interaction calls, formatting-model descriptors, data output, and pure layout results. Coverage includes atomic state transitions, exact wrapper counts, front/back inertness, no flip selection, identity reconciliation, all feature combinations, Single/Auto/Multiple, Fit/Fixed, both 2×2 acceptance viewports, five-path conditional formatting, rule clearing, high contrast, reduced motion, native interaction routing, migration precedence, percentage/currency/model precision/display units, two cultures, and source display names.
 
-Vitest runs in jsdom with typed Power BI host, event-service, selection-manager, identity, and tooltip mocks.
+Release validation runs the pinned local toolchain: clean install, lint, production/test type checks, tests, development/production resource builds, normal/verbose package, full audit, production audit, clean-clone overlay validation, and archive inspection. Generated dependencies, `dist`, `.pbiviz`, webpack reports, certificates, and editor output remain ignored and untracked.
 
-- `kpi.test.ts`: priority, fallback, both directions, three statuses, tolerance, negative references, and zero division.
-- `data.test.ts`: all/required-only fields, optionals, tooltips, formatting metadata, category identity behavior, blank/invalid/non-finite inputs, and variance modes.
-- `settings.test.ts`: production defaults, persisted properties, validators through the model, and all Format pane cards.
-- `renderer.test.ts`: safe DOM structure, hidden sections, face tab order, ARIA, status text, and high contrast.
-- `visual.test.ts`: selection/multi-select/clear/restore, flip isolation and persistence, context menus, tooltip contents, empty states, viewport classes, rendering events, formatting model, and cleanup.
-- `style.test.ts`: root scoping, compact/tiny behavior, overflow handling, and reduced-motion rules.
+## Desktop boundary
 
-The test suite deliberately exercises observable behavior; it contains no trivial assertions.
-
-## Build and release process
-
-Use Node.js 24 LTS and npm 11:
-
-```powershell
-cd flipCardVisual
-npm ci
-npm run lint
-npm run typecheck
-npm test
-npm run build:prod
-npm run package
-```
-
-Dependencies are exact versions in `package.json` and resolved by `package-lock.json`. `powerbi-visuals-tools` is local, so scripts never rely on a global `pbiviz`. Generated dependencies, `.tmp`, `dist`, reports, certificates, and editor state are ignored.
-
-The Power BI development server currently brings `uuid` through `sockjs`; an exact `11.1.1` npm override keeps that tooling-only chain on the advisory-fixed CommonJS-compatible release.
-
-The GitHub Actions workflow repeats install, lint, type-check, tests, production build, and packaging on pushes and pull requests, then uploads the `.pbiviz` artifact.
-
-For a release:
-
-1. Update npm/package and four-part visual versions consistently.
-2. Update `CHANGELOG.md` and user documentation.
-3. Run the complete verification matrix from a clean checkout.
-4. Inspect the packaged filename and archive contents.
-5. Smoke-test the package in Power BI Desktop before distributing it.
-
-## Important decisions
-
-- The original GUID and existing data-role identifiers are retained to avoid breaking saved reports.
-- Single-card behavior is primary; the historical category grid is retained only when Label produces multiple identities.
-- Flip state belongs to stable card instances rather than update calls.
-- Expected author states are rendered messages, not rendering failures.
-- Selection and flipping use separate controls to eliminate ambiguous body clicks.
-- The supported `--all-locales` Power BI tools flag works around an upstream ES-module locale-pruning incompatibility in formatting utilities 7.0.0.
-- Export reliability favors complete synchronous DOM rendering before `renderingFinished`; no delayed animation callback gates the host lifecycle.
-
-## Optional future enhancements
-
-- Localized authoring and empty-state strings.
-- Configurable multi-card grid columns and card height.
-- A sample PBIX and automated screenshot regression fixtures.
-- Trend/sparkline data roles.
-- AppSource certification work, including certification-specific lint and marketplace assets.
+Power BI Desktop was unavailable during implementation. The README and completion report contain the exact manual smoke-test checklist; Desktop behavior is not claimed as verified. Optional tool recommendations such as highlighting and localization remain documented limitations, not scope additions.

@@ -1,7 +1,7 @@
 {
   "name": "powerbi-smart-kpi-flip-card",
   "description": "A responsive Smart KPI Flip Card custom visual for Microsoft Power BI.",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "author": {
     "name": "Ronan Vergara",
@@ -36,6 +36,7 @@
   "dependencies": {
     "d3-selection": "3.0.0",
     "powerbi-visuals-api": "5.11.1",
+    "powerbi-visuals-utils-dataviewutils": "7.0.0",
     "powerbi-visuals-utils-formattingmodel": "7.1.0",
     "powerbi-visuals-utils-formattingutils": "7.0.0",
     "powerbi-visuals-utils-tooltiputils": "6.0.5"
