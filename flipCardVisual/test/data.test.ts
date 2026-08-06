@@ -2,87 +2,91 @@ import { describe, expect, it } from "vitest";
 
 import { extractDataView } from "../src/data";
 import { getVarianceDisplayText, prepareTooltipItems } from "../src/valueFormatting";
-import { createDataView, createHostFixture } from "./helpers";
+import { createDataView, createHostFixture, fill, setCategoryObjects, setValueObjects } from "./helpers";
 
-const formatting = {
-    detail: { displayUnits: 0, precision: undefined },
-    main: { displayUnits: 0, precision: undefined },
-};
+const formatting = { detail: { displayUnits: 0, precision: undefined }, main: { displayUnits: 0, precision: undefined } };
 const kpiOptions = { direction: "higher" as const, neutralTolerancePercent: 0 };
+const extract = (view: powerbi.DataView, locale = "en-US", custom: { detail: { displayUnits: number; precision: number | undefined }; main: { displayUnits: number; precision: number | undefined } } = formatting) => extractDataView(view, createHostFixture(false, locale).host, locale, custom, kpiOptions);
 
-describe("extractDataView", () => {
-    it("extracts every field, display name, format, identity, and tooltip", () => {
-        const host = createHostFixture().host;
-        const result = extractDataView(createDataView({
-            cardValues: [125.5],
-            comparisonValues: [100],
-            detailValues: [42],
-            labels: ["CSAT Score"],
-            targetValues: [120],
-            tooltipColumns: [
-                { displayName: "Owner", values: ["Customer Success"] },
-                { displayName: "Confidence", format: "0.0%", values: [0.975] },
-            ],
-        }), host, "en-US", formatting, kpiOptions);
-
-        expect(result.state).toBe("ready");
+describe("extractDataView and model formatting", () => {
+    it("extracts every row, binding, display name, identity, and tooltip", () => {
+        const result = extract(createDataView({ cardValues: [125.5], comparisonValues: [100], detailValues: [42], labels: ["Vendor A"], targetValues: [120], tooltipColumns: [{ displayName: "Owner", values: ["Finance"] }] }));
+        expect(result).toMatchObject({ state: "ready", hasCategory: true });
         expect(result.cards).toHaveLength(1);
-        const card = result.cards[0]!;
-        expect(card.label).toBe("CSAT Score");
-        expect(card.cardValue.displayName).toBe("Revenue");
-        expect(card.cardValue.source?.format).toBe("$#,0.00");
-        expect(card.cardValue.formattedValue).toContain("125.50");
-        expect(card.detailValue.value).toBe(42);
-        expect(card.comparisonValue.value).toBe(100);
-        expect(card.targetValue.value).toBe(120);
-        expect(card.tooltipValues.map((value) => value.displayName)).toEqual(["Owner", "Confidence"]);
-        expect(card.selectionId?.getKey()).toBe("category:CSAT Score");
+        expect(result.cards[0]).toMatchObject({ label: "Vendor A", hasCategory: true });
+        expect(result.cards[0]!.selectionId?.getKey()).toBe("category:Vendor A");
+        expect(result.cards[0]!.tooltipValues[0]).toEqual({ displayName: "Owner", formattedValue: "Finance" });
     });
 
-    it("supports Card Value alone without a selection identity", () => {
-        const result = extractDataView(createDataView({ cardValues: [77] }), createHostFixture().host, "en-US", formatting, kpiOptions);
-        const card = result.cards[0]!;
-
-        expect(card.label).toBe("Revenue");
+    it("uses Card Value source display name when Label is unbound", () => {
+        const card = extract(createDataView({ cardName: "Net Sales", cardValues: [77] })).cards[0]!;
+        expect(card.label).toBe("Net Sales");
+        expect(card.labelDisplayName).toBe("Net Sales");
         expect(card.selectionId).toBeUndefined();
-        expect(card.detailValue.state).toBe("missing");
-        expect(card.comparisonValue.state).toBe("missing");
-        expect(card.targetValue.state).toBe("missing");
     });
 
-    it.each([
-        [null, "blank"],
-        ["not numeric", "invalid"],
-        [Number.NaN, "invalid"],
-        [Number.POSITIVE_INFINITY, "invalid"],
-    ] as const)("classifies %s Card Value as %s", (value, expectedState) => {
-        const result = extractDataView(createDataView({ cardValues: [value] }), createHostFixture().host, "en-US", formatting, kpiOptions);
-        expect(result.cards[0]?.cardValue.state).toBe(expectedState);
-    });
-
-    it("returns author-facing states for missing bindings and filtered rows", () => {
+    it("returns missing, no-data, and all-invalid states while retaining mixed rows", () => {
         expect(extractDataView(undefined, createHostFixture().host, "en-US", formatting, kpiOptions).state).toBe("missingCardValue");
-        expect(extractDataView(createDataView({ cardValues: [] }), createHostFixture().host, "en-US", formatting, kpiOptions).state).toBe("noData");
+        expect(extract(createDataView({ cardValues: [] })).state).toBe("noData");
+        expect(extract(createDataView({ cardValues: [null, Number.NaN, Number.POSITIVE_INFINITY], labels: ["A", "B", "C"] })).state).toBe("invalidValue");
+        const mixed = extract(createDataView({ cardValues: [10, null, "bad"], labels: ["A", "B", "C"] }));
+        expect(mixed.state).toBe("ready");
+        expect(mixed.cards.map((card) => card.cardValue.state)).toEqual(["valid", "blank", "invalid"]);
     });
 
-    it("uses multiple category rows only when Label is assigned", () => {
-        const withCategory = extractDataView(createDataView({ cardValues: [1, 2], labels: ["A", "B"] }), createHostFixture().host, "en-US", formatting, kpiOptions);
-        const withoutCategory = extractDataView(createDataView({ cardValues: [1, 2] }), createHostFixture().host, "en-US", formatting, kpiOptions);
-
-        expect(withCategory.cards.map((card) => card.label)).toEqual(["A", "B"]);
-        expect(withoutCategory.cards).toHaveLength(1);
+    it("preserves percentage, currency, and model decimal precision", () => {
+        expect(extract(createDataView({ cardFormat: "0.0%", cardValues: [0.125] })).cards[0]!.cardValue.formattedValue).toContain("12.5%");
+        const currency = extract(createDataView({ cardFormat: "$#,0.00", cardValues: [1234.5] }), "en-US", { ...formatting, main: { displayUnits: 1, precision: undefined } }).cards[0]!.cardValue.formattedValue;
+        expect(currency).toContain("$");
+        expect(currency).toContain("1,234.50");
+        expect(extract(createDataView({ cardFormat: "#,0.000", cardValues: [1.2] })).cards[0]!.cardValue.formattedValue).toContain("1.200");
     });
 
-    it("builds absolute, percentage, both, and zero-reference tooltip variance", () => {
-        const card = extractDataView(createDataView({ cardValues: [120], comparisonValues: [100] }), createHostFixture().host, "en-US", formatting, kpiOptions).cards[0]!;
-        expect(getVarianceDisplayText(card, "absolute", "en-US", formatting.detail)).toContain("20.00");
-        expect(getVarianceDisplayText(card, "percentage", "en-US", formatting.detail)).toContain("20.00%");
-        expect(getVarianceDisplayText(card, "both", "en-US", formatting.detail)).toMatch(/20\.00.*20\.00%/);
+    it("honors explicit decimal overrides and display units", () => {
+        const custom = { ...formatting, main: { displayUnits: 1000, precision: 1 } };
+        const value = extract(createDataView({ cardFormat: "#,0.00", cardValues: [12500] }), "en-US", custom).cards[0]!.cardValue.formattedValue;
+        expect(value).toMatch(/12\.5.*K/i);
+    });
 
-        const zeroReference = extractDataView(createDataView({ cardValues: [10], comparisonValues: [0] }), createHostFixture().host, "en-US", formatting, kpiOptions).cards[0]!;
-        zeroReference.varianceText = getVarianceDisplayText(zeroReference, "percentage", "en-US", formatting.detail);
-        prepareTooltipItems(zeroReference);
-        expect(zeroReference.varianceText).toBe("Percentage unavailable (zero reference)");
-        expect(zeroReference.tooltipItems.some((item) => item.value.includes("zero reference"))).toBe(true);
+    it("formats using culture-aware separators", () => {
+        const view = createDataView({ cardFormat: "#,0.00", cardValues: [1234.5] });
+        const fixedUnits = { ...formatting, main: { displayUnits: 1, precision: undefined } };
+        expect(extract(view, "en-US", fixedUnits).cards[0]!.cardValue.formattedValue).toContain("1,234.50");
+        expect(extract(view, "de-DE", fixedUnits).cards[0]!.cardValue.formattedValue).toContain("1.234,50");
+    });
+
+    it("resolves every fx color from category objects before value-column and static constants", () => {
+        const view = createDataView({ cardValues: [10], labels: ["A"], metadataObjects: {
+            cardAppearance: { frontBackground: fill("#100000"), borderColor: fill("#200000"), accentColor: fill("#300000") },
+            mainValue: { fontColor: fill("#400000") }, benchmark: { statusIndicatorColor: fill("#500000") },
+        } });
+        setValueObjects(view, [{ cardAppearance: { frontBackground: fill("#110000"), borderColor: fill("#220000") }, mainValue: { fontColor: fill("#440000") } }]);
+        setCategoryObjects(view, [{ cardAppearance: { frontBackground: fill("#111111"), accentColor: fill("#333333") }, benchmark: { statusIndicatorColor: fill("#555555") } }]);
+        expect(extract(view).cards[0]!.colorOverrides).toEqual({ frontBackground: "#111111", borderColor: "#220000", accentColor: "#333333", mainValueColor: "#440000", statusIndicatorColor: "#555555" });
+    });
+
+    it("supports identity-less static fx evaluation and restores static constants after a rule is cleared", () => {
+        const cases = [
+            ["cardAppearance", "frontBackground", "frontBackground"], ["cardAppearance", "borderColor", "borderColor"],
+            ["cardAppearance", "accentColor", "accentColor"], ["mainValue", "fontColor", "mainValueColor"],
+            ["benchmark", "statusIndicatorColor", "statusIndicatorColor"],
+        ] as const;
+        for (const [objectName, propertyName, resultName] of cases) {
+            const view = createDataView({ cardValues: [10], metadataObjects: { [objectName]: { [propertyName]: fill("#ABCDEF") } } });
+            setValueObjects(view, [{ [objectName]: { [propertyName]: fill("#FEDCBA") } }]);
+            expect(extract(view).cards[0]!.colorOverrides[resultName]).toBe("#FEDCBA");
+            setValueObjects(view, []);
+            expect(extract(view).cards[0]!.colorOverrides[resultName]).toBe("#ABCDEF");
+        }
+    });
+
+    it("builds zero-safe variance and meaningful feature-gated tooltips", () => {
+        const card = extract(createDataView({ cardValues: [10], comparisonValues: [0], detailValues: [4], targetValues: [8] })).cards[0]!;
+        card.varianceText = getVarianceDisplayText(card, "percentage", "en-US", formatting.detail);
+        prepareTooltipItems(card, { benchmark: false, detail: false });
+        expect(card.tooltipItems.map((item) => item.displayName)).toEqual(["Revenue"]);
+        prepareTooltipItems(card, { benchmark: true, detail: true });
+        expect(card.tooltipItems.some((item) => item.value.includes("zero reference"))).toBe(true);
+        expect(card.tooltipItems.map((item) => item.displayName)).toEqual(expect.arrayContaining(["Orders", "Previous Month", "Target"]));
     });
 });

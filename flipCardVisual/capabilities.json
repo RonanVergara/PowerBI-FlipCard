@@ -1,87 +1,54 @@
 {
   "privileges": [],
   "dataRoles": [
-    {
-      "displayName": "Label",
-      "name": "cardLabel",
-      "kind": "Grouping",
-      "description": "Optional category or grouping shown as the KPI label."
-    },
-    {
-      "displayName": "Card Value",
-      "name": "cardValue",
-      "kind": "Measure",
-      "description": "Required main KPI value shown on the front.",
-      "requiredTypes": [{ "numeric": true }, { "integer": true }]
-    },
-    {
-      "displayName": "Detail Value",
-      "name": "detailValue",
-      "kind": "Measure",
-      "description": "Optional supporting value shown on the back.",
-      "requiredTypes": [{ "numeric": true }, { "integer": true }]
-    },
-    {
-      "displayName": "Comparison Value",
-      "name": "comparisonValue",
-      "kind": "Measure",
-      "description": "Optional comparison used for change and variance.",
-      "requiredTypes": [{ "numeric": true }, { "integer": true }]
-    },
-    {
-      "displayName": "Target Value",
-      "name": "targetValue",
-      "kind": "Measure",
-      "description": "Optional target used to evaluate KPI attainment.",
-      "requiredTypes": [{ "numeric": true }, { "integer": true }]
-    },
-    {
-      "displayName": "Tooltips",
-      "name": "tooltips",
-      "kind": "GroupingOrMeasure",
-      "description": "Additional fields included in the native Power BI tooltip."
-    }
+    { "displayName": "Label", "name": "cardLabel", "kind": "Grouping", "description": "Optional category. It labels a single card and supplies identities for Auto or Multiple mode." },
+    { "displayName": "Card Value", "name": "cardValue", "kind": "Measure", "description": "Required main value. This is the only required field.", "requiredTypes": [{ "numeric": true }, { "integer": true }] },
+    { "displayName": "Detail Value", "name": "detailValue", "kind": "Measure", "description": "Optional back-face detail; visible only when Flip and details is enabled.", "requiredTypes": [{ "numeric": true }, { "integer": true }] },
+    { "displayName": "Comparison Value", "name": "comparisonValue", "kind": "Measure", "description": "Optional benchmark value; visually inert until Benchmark and status is enabled.", "requiredTypes": [{ "numeric": true }, { "integer": true }] },
+    { "displayName": "Target Value", "name": "targetValue", "kind": "Measure", "description": "Optional preferred status reference; visually inert until Benchmark and status is enabled.", "requiredTypes": [{ "numeric": true }, { "integer": true }] },
+    { "displayName": "Tooltips", "name": "tooltips", "kind": "GroupingOrMeasure", "description": "Additional fields included in native Power BI tooltips." }
   ],
-  "dataViewMappings": [
-    {
-      "conditions": [
-        {
-          "cardLabel": { "max": 1 },
-          "cardValue": { "min": 1, "max": 1 },
-          "detailValue": { "max": 1 },
-          "comparisonValue": { "max": 1 },
-          "targetValue": { "max": 1 },
-          "tooltips": { "max": 20 }
-        }
-      ],
-      "categorical": {
-        "categories": {
-          "for": { "in": "cardLabel" }
-        },
-        "values": {
-          "select": [
-            { "bind": { "to": "cardValue" } },
-            { "bind": { "to": "detailValue" } },
-            { "bind": { "to": "comparisonValue" } },
-            { "bind": { "to": "targetValue" } },
-            { "for": { "in": "tooltips" } }
-          ]
-        }
-      }
+  "dataViewMappings": [{
+    "conditions": [{ "cardLabel": { "max": 1 }, "cardValue": { "min": 1, "max": 1 }, "detailValue": { "max": 1 }, "comparisonValue": { "max": 1 }, "targetValue": { "max": 1 }, "tooltips": { "max": 20 } }],
+    "categorical": {
+      "categories": { "for": { "in": "cardLabel" } },
+      "values": { "select": [
+        { "bind": { "to": "cardValue" } },
+        { "bind": { "to": "detailValue" } },
+        { "bind": { "to": "comparisonValue" } },
+        { "bind": { "to": "targetValue" } },
+        { "for": { "in": "tooltips" } }
+      ] }
     }
-  ],
+  }],
   "objects": {
     "cardAppearance": {
-      "displayName": "Card appearance",
+      "displayName": "Card",
       "properties": {
-        "frontBackground": { "displayName": "Front background", "type": { "fill": { "solid": { "color": true } } } },
+        "frontBackground": { "displayName": "Background", "type": { "fill": { "solid": { "color": true } } } },
         "backBackground": { "displayName": "Back background", "type": { "fill": { "solid": { "color": true } } } },
         "borderColor": { "displayName": "Border color", "type": { "fill": { "solid": { "color": true } } } },
         "borderWidth": { "displayName": "Border width", "type": { "numeric": true } },
         "cornerRadius": { "displayName": "Corner radius", "type": { "numeric": true } },
         "shadow": { "displayName": "Shadow", "type": { "bool": true } },
+        "accentEnabled": { "displayName": "Accent strip", "type": { "bool": true } },
         "accentColor": { "displayName": "Accent color", "type": { "fill": { "solid": { "color": true } } } },
         "padding": { "displayName": "Internal padding", "type": { "numeric": true } }
+      }
+    },
+    "multipleCards": {
+      "displayName": "Layout",
+      "properties": {
+        "enabled": { "displayName": "Multiple cards", "type": { "bool": true } },
+        "mode": { "displayName": "Card mode", "type": { "enumeration": [{ "displayName": "Auto", "value": "auto" }, { "displayName": "Multiple", "value": "multiple" }] } },
+        "sizing": { "displayName": "Sizing", "type": { "enumeration": [{ "displayName": "Fit to space", "value": "fit" }, { "displayName": "Fixed size", "value": "fixed" }] } },
+        "columnCalculation": { "displayName": "Columns", "type": { "enumeration": [{ "displayName": "Automatic", "value": "automatic" }, { "displayName": "Custom", "value": "custom" }] } },
+        "columns": { "displayName": "Column count", "type": { "numeric": true } },
+        "gap": { "displayName": "Card gap", "type": { "numeric": true } },
+        "preferredWidth": { "displayName": "Preferred width", "type": { "numeric": true } },
+        "preferredHeight": { "displayName": "Preferred height", "type": { "numeric": true } },
+        "fixedWidth": { "displayName": "Card width", "type": { "numeric": true } },
+        "fixedHeight": { "displayName": "Card height", "type": { "numeric": true } }
       }
     },
     "label": {
@@ -92,138 +59,85 @@
         "fontSize": { "displayName": "Font size", "type": { "formatting": { "fontSize": true } } },
         "fontColor": { "displayName": "Font color", "type": { "fill": { "solid": { "color": true } } } },
         "bold": { "displayName": "Bold", "type": { "bool": true } },
-        "alignment": {
-          "displayName": "Alignment",
-          "type": { "enumeration": [
-            { "displayName": "Left", "value": "left" },
-            { "displayName": "Center", "value": "center" },
-            { "displayName": "Right", "value": "right" }
-          ] }
-        },
+        "alignment": { "displayName": "Alignment", "type": { "enumeration": [{ "displayName": "Left", "value": "left" }, { "displayName": "Center", "value": "center" }, { "displayName": "Right", "value": "right" }] } },
         "wrap": { "displayName": "Text wrapping", "type": { "bool": true } }
       }
     },
     "mainValue": {
-      "displayName": "Main value",
+      "displayName": "Callout value",
       "properties": {
         "fontFamily": { "displayName": "Font family", "type": { "formatting": { "fontFamily": true } } },
-        "fontSize": { "displayName": "Font size", "type": { "formatting": { "fontSize": true } } },
+        "fontSize": { "displayName": "Maximum font size", "type": { "formatting": { "fontSize": true } } },
         "fontColor": { "displayName": "Font color", "type": { "fill": { "solid": { "color": true } } } },
         "bold": { "displayName": "Bold", "type": { "bool": true } },
-        "alignment": {
-          "displayName": "Alignment",
-          "type": { "enumeration": [
-            { "displayName": "Left", "value": "left" },
-            { "displayName": "Center", "value": "center" },
-            { "displayName": "Right", "value": "right" }
-          ] }
-        },
+        "alignment": { "displayName": "Alignment", "type": { "enumeration": [{ "displayName": "Left", "value": "left" }, { "displayName": "Center", "value": "center" }, { "displayName": "Right", "value": "right" }] } },
         "displayUnits": { "displayName": "Display units", "type": { "formatting": { "labelDisplayUnits": true } } },
-        "decimalPlaces": {
-          "displayName": "Decimal places",
-          "type": { "enumeration": [
-            { "displayName": "Auto", "value": "auto" },
-            { "displayName": "0", "value": "0" },
-            { "displayName": "1", "value": "1" },
-            { "displayName": "2", "value": "2" },
-            { "displayName": "3", "value": "3" },
-            { "displayName": "4", "value": "4" }
-          ] }
-        }
+        "decimalPlaces": { "displayName": "Decimal places", "type": { "enumeration": [{ "displayName": "Auto", "value": "auto" }, { "displayName": "0", "value": "0" }, { "displayName": "1", "value": "1" }, { "displayName": "2", "value": "2" }, { "displayName": "3", "value": "3" }, { "displayName": "4", "value": "4" }] } }
       }
     },
-    "detailValues": {
-      "displayName": "Detail values",
+    "benchmark": {
+      "displayName": "Benchmark and status",
       "properties": {
-        "showDetail": { "displayName": "Show detail", "type": { "bool": true } },
-        "showComparison": { "displayName": "Show comparison", "type": { "bool": true } },
-        "showTarget": { "displayName": "Show target", "type": { "bool": true } },
+        "enabled": { "displayName": "Benchmark and status", "type": { "bool": true } },
+        "showReference": { "displayName": "Show reference", "type": { "bool": true } },
+        "showStatus": { "displayName": "Show status", "type": { "bool": true } },
         "showVariance": { "displayName": "Show variance", "type": { "bool": true } },
-        "fontFamily": { "displayName": "Font family", "type": { "formatting": { "fontFamily": true } } },
-        "fontSize": { "displayName": "Font size", "type": { "formatting": { "fontSize": true } } },
-        "labelColor": { "displayName": "Label color", "type": { "fill": { "solid": { "color": true } } } },
-        "valueColor": { "displayName": "Value color", "type": { "fill": { "solid": { "color": true } } } },
-        "displayUnits": { "displayName": "Display units", "type": { "formatting": { "labelDisplayUnits": true } } },
-        "decimalPlaces": {
-          "displayName": "Decimal places",
-          "type": { "enumeration": [
-            { "displayName": "Auto", "value": "auto" },
-            { "displayName": "0", "value": "0" },
-            { "displayName": "1", "value": "1" },
-            { "displayName": "2", "value": "2" },
-            { "displayName": "3", "value": "3" },
-            { "displayName": "4", "value": "4" }
-          ] }
-        },
-        "spacing": { "displayName": "Spacing", "type": { "numeric": true } }
-      }
-    },
-    "kpiStatus": {
-      "displayName": "KPI status",
-      "properties": {
-        "show": { "displayName": "Show status", "type": { "bool": true } },
-        "direction": {
-          "displayName": "Preferred direction",
-          "type": { "enumeration": [
-            { "displayName": "Higher values are better", "value": "higher" },
-            { "displayName": "Lower values are better", "value": "lower" }
-          ] }
-        },
+        "direction": { "displayName": "Preferred direction", "type": { "enumeration": [{ "displayName": "Higher values are better", "value": "higher" }, { "displayName": "Lower values are better", "value": "lower" }] } },
         "tolerance": { "displayName": "Neutral tolerance (%)", "type": { "numeric": true } },
         "positiveColor": { "displayName": "Positive color", "type": { "fill": { "solid": { "color": true } } } },
         "neutralColor": { "displayName": "Neutral color", "type": { "fill": { "solid": { "color": true } } } },
         "negativeColor": { "displayName": "Negative color", "type": { "fill": { "solid": { "color": true } } } },
-        "varianceMode": {
-          "displayName": "Variance display",
-          "type": { "enumeration": [
-            { "displayName": "Absolute", "value": "absolute" },
-            { "displayName": "Percentage", "value": "percentage" },
-            { "displayName": "Both", "value": "both" }
-          ] }
-        },
-        "conditionalTarget": {
-          "displayName": "Conditional color target",
-          "type": { "enumeration": [
-            { "displayName": "Status indicator only", "value": "indicator" },
-            { "displayName": "Accent and border", "value": "accent" },
-            { "displayName": "Main value", "value": "mainValue" },
-            { "displayName": "Card background", "value": "background" }
-          ] }
-        }
+        "varianceMode": { "displayName": "Variance display", "type": { "enumeration": [{ "displayName": "Absolute", "value": "absolute" }, { "displayName": "Percentage", "value": "percentage" }, { "displayName": "Both", "value": "both" }] } },
+        "statusIndicatorColor": { "displayName": "Status indicator color", "type": { "fill": { "solid": { "color": true } } } }
       }
     },
-    "flipBehavior": {
-      "displayName": "Flip behavior",
+    "flip": {
+      "displayName": "Flip and details",
       "properties": {
-        "showButton": { "displayName": "Show flip button", "type": { "bool": true } },
-        "position": {
-          "displayName": "Button position",
-          "type": { "enumeration": [
-            { "displayName": "Top left", "value": "topLeft" },
-            { "displayName": "Top right", "value": "topRight" },
-            { "displayName": "Bottom left", "value": "bottomLeft" },
-            { "displayName": "Bottom right", "value": "bottomRight" }
-          ] }
-        },
+        "enabled": { "displayName": "Flip and details", "type": { "bool": true } },
+        "showDetail": { "displayName": "Show Detail Value", "type": { "bool": true } },
+        "position": { "displayName": "Button position", "type": { "enumeration": [{ "displayName": "Top left", "value": "topLeft" }, { "displayName": "Top right", "value": "topRight" }, { "displayName": "Bottom left", "value": "bottomLeft" }, { "displayName": "Bottom right", "value": "bottomRight" }] } },
         "size": { "displayName": "Button size", "type": { "numeric": true } },
         "buttonColor": { "displayName": "Button icon color", "type": { "fill": { "solid": { "color": true } } } },
         "buttonBackground": { "displayName": "Button background", "type": { "fill": { "solid": { "color": true } } } },
         "animationDuration": { "displayName": "Animation duration (ms)", "type": { "numeric": true } },
-        "defaultFace": {
-          "displayName": "Default face",
-          "type": { "enumeration": [
-            { "displayName": "Front", "value": "front" },
-            { "displayName": "Back", "value": "back" }
-          ] }
-        }
+        "fontFamily": { "displayName": "Detail font family", "type": { "formatting": { "fontFamily": true } } },
+        "fontSize": { "displayName": "Detail font size", "type": { "formatting": { "fontSize": true } } },
+        "labelColor": { "displayName": "Detail label color", "type": { "fill": { "solid": { "color": true } } } },
+        "valueColor": { "displayName": "Detail value color", "type": { "fill": { "solid": { "color": true } } } },
+        "displayUnits": { "displayName": "Detail display units", "type": { "formatting": { "labelDisplayUnits": true } } },
+        "decimalPlaces": { "displayName": "Detail decimal places", "type": { "enumeration": [{ "displayName": "Auto", "value": "auto" }, { "displayName": "0", "value": "0" }, { "displayName": "1", "value": "1" }, { "displayName": "2", "value": "2" }, { "displayName": "3", "value": "3" }, { "displayName": "4", "value": "4" }] } },
+        "spacing": { "displayName": "Detail spacing", "type": { "numeric": true } }
+      }
+    },
+    "interactions": {
+      "displayName": "Interactions",
+      "properties": {
+        "selectionEnabled": { "displayName": "Selection and filtering", "type": { "bool": true } },
+        "enableFlip": { "displayName": "Legacy enable flip", "type": { "bool": true } }
+      }
+    },
+    "detailValues": {
+      "displayName": "Legacy detail values",
+      "properties": {
+        "showDetail": { "displayName": "Show detail", "type": { "bool": true } }, "showComparison": { "displayName": "Show comparison", "type": { "bool": true } }, "showTarget": { "displayName": "Show target", "type": { "bool": true } }, "showVariance": { "displayName": "Show variance", "type": { "bool": true } },
+        "fontFamily": { "displayName": "Font family", "type": { "formatting": { "fontFamily": true } } }, "fontSize": { "displayName": "Font size", "type": { "formatting": { "fontSize": true } } }, "labelColor": { "displayName": "Label color", "type": { "fill": { "solid": { "color": true } } } }, "valueColor": { "displayName": "Value color", "type": { "fill": { "solid": { "color": true } } } }, "displayUnits": { "displayName": "Display units", "type": { "formatting": { "labelDisplayUnits": true } } }, "decimalPlaces": { "displayName": "Decimal places", "type": { "enumeration": [{ "displayName": "Auto", "value": "auto" }, { "displayName": "0", "value": "0" }, { "displayName": "1", "value": "1" }, { "displayName": "2", "value": "2" }, { "displayName": "3", "value": "3" }, { "displayName": "4", "value": "4" }] } }, "spacing": { "displayName": "Spacing", "type": { "numeric": true } }
+      }
+    },
+    "kpiStatus": {
+      "displayName": "Legacy KPI status",
+      "properties": {
+        "show": { "displayName": "Show", "type": { "bool": true } }, "direction": { "displayName": "Direction", "type": { "enumeration": [{ "displayName": "Higher values are better", "value": "higher" }, { "displayName": "Lower values are better", "value": "lower" }] } }, "tolerance": { "displayName": "Tolerance", "type": { "numeric": true } }, "positiveColor": { "displayName": "Positive", "type": { "fill": { "solid": { "color": true } } } }, "neutralColor": { "displayName": "Neutral", "type": { "fill": { "solid": { "color": true } } } }, "negativeColor": { "displayName": "Negative", "type": { "fill": { "solid": { "color": true } } } }, "varianceMode": { "displayName": "Variance", "type": { "enumeration": [{ "displayName": "Absolute", "value": "absolute" }, { "displayName": "Percentage", "value": "percentage" }, { "displayName": "Both", "value": "both" }] } }, "conditionalTarget": { "displayName": "Legacy target", "type": { "enumeration": [{ "displayName": "Status indicator only", "value": "indicator" }, { "displayName": "Accent and border", "value": "accent" }, { "displayName": "Main value", "value": "mainValue" }, { "displayName": "Card background", "value": "background" }] } }
+      }
+    },
+    "flipBehavior": {
+      "displayName": "Legacy flip behavior",
+      "properties": {
+        "showButton": { "displayName": "Show button", "type": { "bool": true } }, "position": { "displayName": "Position", "type": { "enumeration": [{ "displayName": "Top left", "value": "topLeft" }, { "displayName": "Top right", "value": "topRight" }, { "displayName": "Bottom left", "value": "bottomLeft" }, { "displayName": "Bottom right", "value": "bottomRight" }] } }, "size": { "displayName": "Size", "type": { "numeric": true } }, "buttonColor": { "displayName": "Button color", "type": { "fill": { "solid": { "color": true } } } }, "buttonBackground": { "displayName": "Button background", "type": { "fill": { "solid": { "color": true } } } }, "animationDuration": { "displayName": "Duration", "type": { "numeric": true } }, "defaultFace": { "displayName": "Default face", "type": { "enumeration": [{ "displayName": "Front", "value": "front" }, { "displayName": "Back", "value": "back" }] } }
       }
     }
   },
-  "tooltips": {
-    "supportedTypes": { "default": true, "canvas": true },
-    "roles": ["tooltips"],
-    "supportEnhancedTooltips": true
-  },
+  "tooltips": { "supportedTypes": { "default": true, "canvas": true }, "roles": ["tooltips"], "supportEnhancedTooltips": true },
   "supportsEmptyDataView": true,
   "supportsLandingPage": true,
   "supportsKeyboardFocus": true,

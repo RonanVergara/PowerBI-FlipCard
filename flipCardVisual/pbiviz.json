@@ -4,8 +4,8 @@
     "displayName": "Smart KPI Flip Card",
     "guid": "flipCardVisualFC7B9C3E9690417084C0A63577A86637",
     "visualClassName": "Visual",
-    "version": "1.0.0.0",
-    "description": "A responsive KPI card with a dedicated detail face, target and comparison status, native Power BI interactions, and accessible formatting controls.",
+    "version": "1.1.0.0",
+    "description": "A simple-first Power BI KPI card with optional benchmarks, flip details, responsive multiple cards, native interactions, and accessible formatting.",
     "supportUrl": "https://github.com/RonanVergara/PowerBI-FlipCard/issues",
     "gitHubUrl": "https://github.com/RonanVergara/PowerBI-FlipCard"
   },
