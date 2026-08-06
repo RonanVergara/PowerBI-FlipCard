@@ -9,8 +9,10 @@ export type NumericValueState = "missing" | "blank" | "invalid" | "valid";
 export type KpiDirection = "higher" | "lower";
 export type KpiStatus = "positive" | "neutral" | "negative";
 export type KpiReferenceKind = "target" | "comparison" | "none";
+export type KpiRelation = "exact" | "withinTolerance" | "above" | "below" | "none";
 export type VarianceMode = "absolute" | "percentage" | "both";
 export type CardFace = "front" | "back";
+export type FaceTransitionState = CardFace | "turningToBack" | "turningToFront";
 export type VisualDataState = "ready" | "missingCardValue" | "noData" | "invalidValue";
 export type VisualRenderState = VisualDataState | "configurationRequired" | "tooSmall";
 export type EffectiveCardMode = "single" | "auto" | "multiple";
@@ -18,6 +20,23 @@ export type MultipleCardMode = "auto" | "multiple";
 export type SizingMode = "fit" | "fixed";
 export type ColumnCalculation = "automatic" | "custom";
 export type LayoutDensity = "regular" | "compact" | "minimal";
+export type FrontPresentationMode = "auto" | "stacked" | "split";
+export type ResolvedFrontPresentation = "stacked" | "split";
+export type VerticalAlignment = "top" | "center" | "bottom";
+export type ResponsivePriority = "automatic" | "insight" | "status";
+export type StatusPresentation = "pill" | "text" | "iconOnly";
+export type BackLayoutMode = "auto" | "list" | "tiles";
+export type ResolvedBackLayout = "list" | "tiles";
+export type BackTitleSource = "automatic" | "category" | "custom";
+export type DetailEmphasis = "standard" | "strong";
+export type ControlIcon = "information" | "rotate" | "chevron";
+export type ControlStyle = "ghost" | "outline" | "filled";
+export type ControlShape = "circle" | "roundedSquare";
+export type MotionStyle = "horizontal" | "vertical" | "fade" | "none";
+export type HorizontalDirection = "left" | "right";
+export type VerticalDirection = "up" | "down";
+export type MotionEasing = "smooth" | "snappy" | "gentle";
+export type MotionPerspective = "subtle" | "standard" | "deep";
 
 export interface NumericFieldValue {
     readonly displayName: string;
@@ -37,10 +56,34 @@ export interface KpiResult {
     readonly absoluteVariance: number | undefined;
     readonly percentageVariance: number | undefined;
     readonly status: KpiStatus;
+    readonly statusDifference: number | undefined;
+    readonly statusRelation: KpiRelation;
     readonly statusReference: KpiReferenceKind;
     readonly statusReferenceValue: number | undefined;
+    readonly varianceStatus: KpiStatus;
     readonly varianceReference: KpiReferenceKind;
     readonly varianceReferenceValue: number | undefined;
+}
+
+export interface KpiInsightPresentation {
+    readonly accessibleText: string;
+    readonly referenceName: string;
+    readonly referenceValueText: string;
+    readonly text: string;
+    readonly tone: KpiStatus;
+}
+
+export interface KpiStatusPresentation {
+    readonly accessibleText: string;
+    readonly conciseText: string;
+    readonly referenceName: string;
+    readonly text: string;
+    readonly tone: KpiStatus;
+}
+
+export interface KpiPresentation {
+    readonly insight: KpiInsightPresentation | undefined;
+    readonly status: KpiStatusPresentation | undefined;
 }
 
 export interface ConditionalColorOverrides {
@@ -64,6 +107,7 @@ export interface CardViewModel {
     readonly selectionId: ISelectionId | undefined;
     readonly targetValue: NumericFieldValue;
     readonly tooltipValues: AdditionalTooltipValue[];
+    presentation?: KpiPresentation;
     tooltipItems: VisualTooltipDataItem[];
     varianceText: string | undefined;
 }

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const tooltipMocks = vi.hoisted(() => ({ addTooltip: vi.fn(), hide: vi.fn() }));
 vi.mock("powerbi-visuals-utils-tooltiputils", () => ({ createTooltipServiceWrapper: () => ({ addTooltip: tooltipMocks.addTooltip, hide: tooltipMocks.hide }) }));
@@ -10,7 +10,7 @@ import { createDataView, createHostFixture, createUpdateOptions, flushPromises }
 
 const multipleFit = { multipleCards: { enabled: true, mode: "multiple", sizing: "fit" } } as powerbi.DataViewObjects;
 const autoFit = { multipleCards: { enabled: true, mode: "auto", sizing: "fit" } } as powerbi.DataViewObjects;
-const flipDetail = { flip: { enabled: true } } as powerbi.DataViewObjects;
+const flipDetail = { flip: { enabled: true, motionStyle: "none" } } as powerbi.DataViewObjects;
 
 function createVisual(highContrast = false) {
     const target = document.createElement("div");
@@ -21,9 +21,13 @@ function createVisual(highContrast = false) {
 
 function click(element: Element, options: MouseEventInit = {}): void { element.dispatchEvent(new MouseEvent("click", { bubbles: true, ...options })); }
 function wrappers(target: HTMLElement): NodeListOf<HTMLElement> { return target.querySelectorAll<HTMLElement>(".flip-card-wrapper"); }
+function finishTransition(element: Element, propertyName: "opacity" | "transform", type: "transitioncancel" | "transitionend" = "transitionend"): void {
+    const event = new Event(type, { bubbles: true }); Object.defineProperty(event, "propertyName", { value: propertyName }); element.dispatchEvent(event);
+}
 
 describe("Visual state, interactions, and combinations", () => {
     beforeEach(() => { tooltipMocks.addTooltip.mockReset(); tooltipMocks.hide.mockReset(); });
+    afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
 
     it("atomically transitions missing Card Value to ready", () => {
         const { target, visual } = createVisual();
@@ -100,24 +104,98 @@ describe("Visual state, interactions, and combinations", () => {
         const view = createDataView({ cardValues: [10], detailValues: [4], labels: ["A"], metadataObjects: flipDetail });
         visual.update(createUpdateOptions(view));
         click(target.querySelector(".flip-card-flip-front")!);
-        expect(target.querySelector(".flip-card-inner")!.classList.contains("is-flipped")).toBe(true);
+        expect(target.querySelector(".flip-card-inner")!.classList.contains("is-back")).toBe(true);
         expect(target.querySelector(".flip-card-front")!.hasAttribute("inert")).toBe(true);
         expect(target.querySelector(".flip-card-back")!.hasAttribute("inert")).toBe(false);
-        expect(document.activeElement).toBe(target.querySelector(".flip-card-flip-back"));
+        expect(document.activeElement).not.toBe(target.querySelector(".flip-card-flip-back"));
         click(target.querySelector(".flip-card-flip-back")!);
-        expect(target.querySelector(".flip-card-inner")!.classList.contains("is-flipped")).toBe(false);
+        expect(target.querySelector(".flip-card-inner")!.classList.contains("is-back")).toBe(false);
         expect(target.querySelector(".flip-card-back")!.hasAttribute("inert")).toBe(true);
-        expect(document.activeElement).toBe(target.querySelector(".flip-card-flip-front"));
+        expect(document.activeElement).not.toBe(target.querySelector(".flip-card-flip-front"));
         expect(fixture.spies.select).not.toHaveBeenCalled(); expect(fixture.spies.selectionClear).not.toHaveBeenCalled();
         visual.destroy();
         target.remove();
+    });
+
+    it("locks horizontal motion, completes only on the expected event, and transfers keyboard focus afterward", () => {
+        const { fixture, target, visual } = createVisual(); document.body.append(target);
+        const view = createDataView({ cardValues: [10], detailValues: [4], labels: ["A"], metadataObjects: { flip: { enabled: true, animationDuration: 450, motionStyle: "horizontal" } } });
+        visual.update(createUpdateOptions(view));
+        const frontButton = target.querySelector<HTMLButtonElement>(".flip-card-flip-front")!; frontButton.focus();
+        frontButton.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Enter" })); click(frontButton);
+        const wrapper = wrappers(target)[0]!; const inner = target.querySelector<HTMLElement>(".flip-card-inner")!;
+        expect(wrapper.dataset.transitionState).toBe("turningToBack"); expect(inner.classList.contains("is-back")).toBe(true);
+        click(frontButton); expect(wrapper.dataset.transitionState).toBe("turningToBack");
+        finishTransition(inner, "opacity"); expect(wrapper.dataset.transitionState).toBe("turningToBack");
+        finishTransition(inner, "transform");
+        expect(wrapper.dataset.transitionState).toBe("back"); expect(target.querySelector(".flip-card-front")?.hasAttribute("inert")).toBe(true);
+        expect(document.activeElement).toBe(target.querySelector(".flip-card-flip-back"));
+        expect(fixture.spies.select).not.toHaveBeenCalled();
+        visual.destroy(); target.remove();
+    });
+
+    it("completes Fade on destination opacity and does not steal focus after pointer activation", () => {
+        const { target, visual } = createVisual(); document.body.append(target);
+        visual.update(createUpdateOptions(createDataView({ cardValues: [10], detailValues: [4], labels: ["A"], metadataObjects: { flip: { enabled: true, motionStyle: "fade", animationDuration: 300 } } })));
+        const button = target.querySelector<HTMLButtonElement>(".flip-card-flip-front")!;
+        button.dispatchEvent(new Event("pointerdown", { bubbles: true })); click(button, { detail: 1 });
+        expect(wrappers(target)[0]!.dataset.transitionState).toBe("turningToBack");
+        finishTransition(target.querySelector(".flip-card-back")!, "opacity");
+        expect(wrappers(target)[0]!.dataset.transitionState).toBe("back");
+        expect(document.activeElement).not.toBe(target.querySelector(".flip-card-flip-back"));
+        visual.destroy(); target.remove();
+    });
+
+    it("uses the guarded fallback timer when no transition event arrives", () => {
+        vi.useFakeTimers();
+        const { target, visual } = createVisual();
+        visual.update(createUpdateOptions(createDataView({ cardValues: [10], detailValues: [4], labels: ["A"], metadataObjects: { flip: { enabled: true, motionStyle: "vertical", animationDuration: 300 } } })));
+        click(target.querySelector(".flip-card-flip-front")!);
+        vi.advanceTimersByTime(399); expect(wrappers(target)[0]!.dataset.transitionState).toBe("turningToBack");
+        vi.advanceTimersByTime(1); expect(wrappers(target)[0]!.dataset.transitionState).toBe("back");
+        visual.destroy();
+    });
+
+    it("resolves an in-flight transition to its intended face during rerender", () => {
+        const { target, visual } = createVisual();
+        const view = createDataView({ cardValues: [10], detailValues: [4], labels: ["A"], metadataObjects: { flip: { enabled: true, motionStyle: "horizontal", animationDuration: 450 } } });
+        visual.update(createUpdateOptions(view)); click(target.querySelector(".flip-card-flip-front")!);
+        expect(wrappers(target)[0]!.dataset.transitionState).toBe("turningToBack");
+        visual.update(createUpdateOptions(view, 420, 220));
+        expect(wrappers(target)[0]!.dataset.transitionState).toBe("back"); expect(target.querySelector(".flip-card-inner")?.classList.contains("is-back")).toBe(true);
+        visual.destroy();
+    });
+
+    it("preserves keyboard focus intent across rerender and too-small recovery", () => {
+        const { target, visual } = createVisual(); document.body.append(target);
+        const view = createDataView({ cardValues: [10], detailValues: [4], labels: ["A"], metadataObjects: { flip: { enabled: true, motionStyle: "horizontal", animationDuration: 450 } } });
+        visual.update(createUpdateOptions(view));
+        const front = target.querySelector<HTMLButtonElement>(".flip-card-flip-front")!; front.focus();
+        front.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Enter" })); click(front);
+        visual.update(createUpdateOptions(view, 80, 50)); expect(target.textContent).toContain("cannot render one usable card");
+        visual.update(createUpdateOptions(view, 420, 220));
+        expect(wrappers(target)[0]!.dataset.transitionState).toBe("back"); expect(document.activeElement).toBe(target.querySelector(".flip-card-flip-back"));
+        visual.destroy(); target.remove();
+    });
+
+    it("immediately resolves active motion when reduced motion becomes enabled and cleans up matchMedia", () => {
+        let matches = false; let listener: (() => void) | undefined;
+        const add = vi.fn((_type: string, callback: () => void) => { listener = callback; });
+        const remove = vi.fn();
+        vi.stubGlobal("matchMedia", vi.fn(() => ({ addEventListener: add, get matches() { return matches; }, removeEventListener: remove })));
+        const { target, visual } = createVisual();
+        visual.update(createUpdateOptions(createDataView({ cardValues: [10], detailValues: [4], labels: ["A"], metadataObjects: { flip: { enabled: true, motionStyle: "horizontal", animationDuration: 450 } } })));
+        click(target.querySelector(".flip-card-flip-front")!); expect(wrappers(target)[0]!.dataset.transitionState).toBe("turningToBack");
+        matches = true; listener?.();
+        expect(wrappers(target)[0]!.dataset.transitionState).toBe("back"); expect(wrappers(target)[0]!.style.getPropertyValue("--flip-duration")).toBe("0ms");
+        visual.destroy(); expect(remove).toHaveBeenCalledOnce();
     });
 
     it("returns from unused back background without selection", () => {
         const { fixture, target, visual } = createVisual();
         visual.update(createUpdateOptions(createDataView({ cardValues: [10], detailValues: [4], labels: ["A"], metadataObjects: flipDetail })));
         click(target.querySelector(".flip-card-flip-front")!); click(target.querySelector(".flip-card-back-content")!);
-        expect(target.querySelector(".flip-card-inner")!.classList.contains("is-flipped")).toBe(false);
+        expect(target.querySelector(".flip-card-inner")!.classList.contains("is-back")).toBe(false);
         expect(fixture.spies.select).not.toHaveBeenCalled();
     });
 
@@ -125,11 +203,11 @@ describe("Visual state, interactions, and combinations", () => {
         const { target, visual } = createVisual();
         const base = createDataView({ cardValues: [10], detailValues: [4], labels: ["A"], metadataObjects: flipDetail });
         visual.update(createUpdateOptions(base)); click(target.querySelector(".flip-card-flip-front")!);
-        visual.update(createUpdateOptions(base, 420, 220)); expect(target.querySelector(".flip-card-inner")!.classList.contains("is-flipped")).toBe(true);
-        const formatted = createDataView({ cardValues: [10], detailValues: [4], labels: ["A"], metadataObjects: { flip: { enabled: true }, cardAppearance: { cornerRadius: 20 } } });
-        visual.update(createUpdateOptions(formatted, 420, 220)); expect(target.querySelector(".flip-card-inner")!.classList.contains("is-flipped")).toBe(true);
+        visual.update(createUpdateOptions(base, 420, 220)); expect(target.querySelector(".flip-card-inner")!.classList.contains("is-back")).toBe(true);
+        const formatted = createDataView({ cardValues: [10], detailValues: [4], labels: ["A"], metadataObjects: { flip: { enabled: true, motionStyle: "none" }, cardAppearance: { cornerRadius: 20 } } });
+        visual.update(createUpdateOptions(formatted, 420, 220)); expect(target.querySelector(".flip-card-inner")!.classList.contains("is-back")).toBe(true);
         visual.update(createUpdateOptions(formatted, 80, 50)); expect(wrappers(target)).toHaveLength(0); expect(target.textContent).toContain("cannot render one usable card");
-        visual.update(createUpdateOptions(formatted, 420, 220)); expect(wrappers(target)).toHaveLength(1); expect(target.querySelector(".flip-card-inner")!.classList.contains("is-flipped")).toBe(true);
+        visual.update(createUpdateOptions(formatted, 420, 220)); expect(wrappers(target)).toHaveLength(1); expect(target.querySelector(".flip-card-inner")!.classList.contains("is-back")).toBe(true);
     });
 
     it("starts changed identities on front and immediately removes back DOM when Flip is disabled", () => {
@@ -137,7 +215,7 @@ describe("Visual state, interactions, and combinations", () => {
         visual.update(createUpdateOptions(createDataView({ cardValues: [10], detailValues: [4], labels: ["A"], metadataObjects: flipDetail })));
         click(target.querySelector(".flip-card-flip-front")!);
         visual.update(createUpdateOptions(createDataView({ cardValues: [10], detailValues: [4], labels: ["B"], metadataObjects: flipDetail })));
-        expect(target.querySelector(".flip-card-inner")!.classList.contains("is-flipped")).toBe(false);
+        expect(target.querySelector(".flip-card-inner")!.classList.contains("is-back")).toBe(false);
         visual.update(createUpdateOptions(createDataView({ cardValues: [10], detailValues: [4], labels: ["B"] })));
         expect(target.querySelector(".flip-card-back")).toBeNull(); expect(target.querySelector(".flip-card-flip-front")).toBeNull();
     });
@@ -162,7 +240,7 @@ describe("Visual state, interactions, and combinations", () => {
         const { target, visual } = createVisual();
         visual.update(createUpdateOptions(createDataView({ cardValues: [10], comparisonValues: [8], detailValues: [4], labels: ["A"], metadataObjects: metadataObjects as powerbi.DataViewObjects })));
         expect(wrappers(target)).toHaveLength(1);
-        expect(!(target.querySelector<HTMLElement>(".flip-card-reference")?.hidden ?? true)).toBe(expectBenchmark);
+        expect(!(target.querySelector<HTMLElement>(".flip-card-insight")?.hidden ?? true)).toBe(expectBenchmark);
         expect(target.querySelector(".flip-card-flip-front") !== null).toBe(expectFlip);
     });
 
@@ -175,6 +253,16 @@ describe("Visual state, interactions, and combinations", () => {
         click(buttons[0]!); await flushPromises(); click(buttons[0]!); await flushPromises(); expect(fixture.selectionManager.getSelectionIds()).toHaveLength(0);
         click(buttons[1]!); await flushPromises(); visual.update(createUpdateOptions(view, 400, 220)); expect(wrappers(target)[1]!.classList.contains("is-selected")).toBe(true);
         click(target.querySelector(".flip-card-container")!); await flushPromises(); expect(fixture.selectionManager.getSelectionIds()).toHaveLength(0);
+    });
+
+    it("does not clear selection for clicks that land inside a transitioning card", async () => {
+        const { fixture, target, visual } = createVisual();
+        visual.update(createUpdateOptions(createDataView({ cardValues: [10], detailValues: [4], labels: ["A"], metadataObjects: { flip: { enabled: true, motionStyle: "horizontal" } } })));
+        click(target.querySelector(".flip-card-flip-front")!);
+        click(target.querySelector(".flip-card-inner")!);
+        await flushPromises();
+        expect(fixture.spies.selectionClear).not.toHaveBeenCalled(); expect(fixture.spies.select).not.toHaveBeenCalled();
+        visual.destroy();
     });
 
     it("disables selection when requested but retains context menus", async () => {

@@ -1,50 +1,62 @@
 # Smart KPI Flip Card for Power BI
 
-## Simple card first
+Smart KPI Flip Card 1.2.0 is a focused face-design and motion release. Card Value remains the only required field; no data roles were added. The visual keeps GUID `flipCardVisualFC7B9C3E9690417084C0A63577A86637`, Ronan Vergara’s author metadata, the MIT license, and the six existing roles: `cardLabel`, `cardValue`, `detailValue`, `comparisonValue`, `targetValue`, and `tooltips`.
 
-Smart KPI Flip Card 1.1.0 starts as a clean, neutral Power BI card. **Card Value is the only required field.** A new visual shows the optional Label—or the Card Value measure name when Label is unbound—and the model-formatted callout value. Flip, benchmark/status, multiple cards, and selection are independent capabilities that report authors enable only when needed.
+## Face layouts
 
-The visual preserves GUID `flipCardVisualFC7B9C3E9690417084C0A63577A86637`, Ronan Vergara’s author identity, the MIT license, and the existing `cardLabel`, `cardValue`, `detailValue`, `comparisonValue`, `targetValue`, and `tooltips` role identifiers.
+Front — Label exposes three presentation modes:
 
-## Activate optional features
+- **Auto** chooses Split only when renderable insight or status content exists, the card is at least 300×120, and the aspect ratio is at least 1.6. Otherwise it uses Stacked.
+- **Stacked** keeps label, value, insight, and status in a vertical hierarchy for narrow or square cards.
+- **Split** uses a 58/42 primary/secondary hierarchy when safe and falls back to Stacked below the same safety limit.
 
-| Feature | How to activate it | Result |
-| --- | --- | --- |
-| Core card | Bind **Card Value**. Optionally bind **Label**. | One full-viewport card with label and formatted value only. |
-| Benchmark and status | Turn on **Benchmark and status**, then bind Target and/or Comparison. | Target is the first status reference; Comparison is the first variance reference. Invalid references produce no benchmark UI. |
-| Flip and details | Turn on **Flip and details**, then bind a valid Detail Value or enable Benchmark with a valid reference. | A flip control and meaningful back face appear. A binding alone never forces Flip on. |
-| Multiple cards | Turn on **Multiple cards**, then choose **Auto** or **Multiple**. | Auto uses a single presentation for one row and a grid for multiple identified rows. Multiple requires Label and always applies the selected sizing behavior. |
-| Selection/filtering | On by default under **Interactions**. | Effective only when Label supplies a Power BI category identity. |
+Responsive compaction removes the secondary reference line first, shortens Pill to Text and then Icon-only, reduces gaps and padding, constrains the label, and scales the callout while reserving the complete flip-control cluster. `responsivePriority` decides whether insight or status survives first at minimal density. Layout decisions are made by the pure calculator and never remove eligible tooltip or screen-reader information.
 
-Optional field wells remain statically visible because Power BI declares roles in `capabilities.json`; feature switches make those fields visually inert until enabled.
+Back face and flip motion exposes:
 
-## Card modes and sizing
+- **Auto**: Tiles with at least two valid items at 280×130 or larger; List otherwise.
+- **List**: responsive label/value rows.
+- **Tiles**: normally two columns; below the threshold it becomes a one-column List before any information is removed.
 
-- **Single** is the 1.1.0 default. It accepts zero or one Label row and fills the viewport. Multiple rows show one configuration message; no row is discarded.
-- **Auto** fills the viewport for one row. Multiple identified Label rows use the responsive grid; missing identities show a configuration message.
-- **Multiple** requires Label. One or more category rows use **Fit to space** or **Fixed size**.
-- **Fit to space** is the default. It evaluates feasible columns, compacts before scrolling, never creates horizontal overflow, and lets one row fill the viewport. The 160×110 setting is a preferred target, not a hard minimum.
-- **Fixed size** honors configured width and height, including one-row Multiple mode, and may intentionally scroll horizontally or vertically.
-- Column calculation is named **Automatic** or **Custom** so it is distinct from Auto card mode.
+The back contains only valid enabled items under a fixed header: Detail Value, Comparison, Target, variance, and reference-aware status. Compact layouts remove subtitles and decoration before reducing spacing. If all rows cannot fit, only the content region scrolls vertically. Front and back always share the same outer dimensions, border, radius, and accent.
 
-Four core-only vendor cards fit as a 2×2 grid at approximately 660×290 and 320×200. Responsive compaction removes front variance/reference first, shortens secondary content, reduces spacing, constrains the label, then scales the callout below its configured maximum. Flip-control space remains reserved.
+## Smart KPI language
 
-## Data and benchmark rules
+Calculation behavior remains compatible with 1.1.0:
 
-| Field | Required | Behavior |
-| --- | --- | --- |
-| Label | No | Card label, category rows, identities, selection, and Multiple mode. |
-| Card Value | Yes | Finite numeric callout value. Model format, culture, display units, and precision are retained. |
-| Detail Value | No | Meaningful back content only when Flip is enabled. |
-| Comparison Value | No | First variance reference; fallback status reference. |
-| Target Value | No | First status reference; fallback variance reference. |
-| Tooltips | No | Additional fields in the native Power BI tooltip. |
+- Status reference priority: Target, then Comparison.
+- Variance reference priority: Comparison, then Target.
+- Signed absolute variance and percentage variance divided by `abs(reference)`.
+- Higher-is-better, lower-is-better, tolerance boundaries, negative references, and zero-reference safety.
 
-Absolute variance is `Card Value - reference`. Percentage variance divides by `abs(reference)`, preserves negative-reference behavior, and is unavailable for a zero reference. Tolerance uses the absolute status reference. Higher/lower-is-better changes favorable direction without changing the signed variance. Blank, invalid, `NaN`, and infinite optional values do not create UI or announcements. The visual never displays “No benchmark.”
+Every numeric insight names its reference, for example `+12.4% vs Previous Month`. A zero percentage reference falls back to signed absolute variance instead of infinity or an ambiguous placeholder.
 
-## Native conditional formatting (`fx`)
+Target status uses **At target**, **Within tolerance**, **Above target**, or **Below target**. Comparison status uses **Improved**, **Declined**, or **Unchanged**. Above/below describes numeric position; positive/neutral/negative styling represents performance direction. With both references, the front can show comparison insight and target status without repeating the same interpretation.
 
-The visual implements Power BI `ConstantOrRule` descriptors with the official wildcard selector and `altConstantValueSelector` pattern for exactly these five paths:
+## Motion and controls
+
+The canonical face remains Front or Back while the transition controller uses `front`, `turningToBack`, `back`, and `turningToFront`. Supported motion is Horizontal, Vertical, Fade, or None, with Left/Right, Up/Down, Smooth/Snappy/Gentle easing, 0–2000 ms duration, and Subtle/Standard/Deep perspective where relevant.
+
+Repeated activation is locked. Completion filters the expected element and CSS property, accepts `transitionend` or `transitioncancel`, and uses an exactly-once `duration + 100 ms` fallback. Resize or formatting updates resolve to the intended canonical destination. Timers, transition listeners, activation bookkeeping, and `matchMedia` listeners are cleaned up.
+
+Controls support Information, Rotate, or Chevron icons; Ghost, Outline, or Filled styles; Circle or Rounded-square shapes; and an optional separate **Details** cue. The cue is never part of the button, so a Circle button remains circular. Whole-card flip activation is intentionally not implemented because the front surface retains Power BI selection.
+
+## Interactions and accessibility
+
+- A selectable front surface keeps click-again deselection, Ctrl/Cmd multi-select, blank-space clearing, selection restoration, context menus, and native tooltips.
+- Identity-less or selection-disabled cards are static, non-focusable accessible groups. They do not expose selection keyboard behavior.
+- Flip controls and the back background never call the selection manager. The back background returns to Front without stealing focus.
+- Inactive faces are `aria-hidden`, inert, untabbable, pointer-inert, and omitted from current screen-reader navigation.
+- Keyboard Enter/Space requests destination-control focus after completion. Pointer/touch transfers focus only when the originating control already held focus.
+- Screen-reader summaries and tooltips use the viewport-independent KPI presentation and retain all valid enabled information, including explicitly bound Tooltip fields.
+- High contrast replaces authored, evaluated, and automatic backgrounds, borders, accents, text, controls, focus, insight/status, and back-face colors.
+- `prefers-reduced-motion`, motion None, and zero duration complete immediately without 3D movement or delay.
+
+## Format pane and native `fx`
+
+The seven visible cards are **Card frame**, **Multiple-card layout**, **Front — Label**, **Front — Callout**, **Front — Insight and status**, **Back face and flip motion**, and **Interactions**. These are display names; internal card names remain `cardAppearance`, `multipleCards`, `label`, `mainValue`, `benchmark`, `flip`, and `interactions`. Groups and conditional slice visibility are documented in [Formatting properties](docs/FORMATTING_PROPERTIES.md).
+
+The exact native conditional-formatting paths remain:
 
 1. `cardAppearance.frontBackground`
 2. `cardAppearance.borderColor`
@@ -52,38 +64,27 @@ The visual implements Power BI `ConstantOrRule` descriptors with the official wi
 4. `mainValue.fontColor`
 5. `benchmark.statusIndicatorColor`
 
-Evaluated colors resolve from category-row objects, then value-column row objects, then an explicitly saved static constant. Clearing an `fx` rule reveals the saved constant. Without a saved status override, positive/neutral/negative status colors remain automatic. Power BI high-contrast colors override every constant and evaluated color.
+Each uses the official wildcard selector, category/identity-less alternate constant selector, and `ConstantOrRule`. Clearing a rule reveals its saved static constant. `benchmark.statusIndicatorColor` controls front and back status indicators only; it never recolors the numeric insight line. High contrast overrides constants and evaluated colors.
 
-## Interactions and accessibility
+## Upgrade from 1.1.0
 
-- Front-card click selects; clicking the sole selected card again clears it. Ctrl/Cmd supports multi-select, and blank visual space clears selection.
-- Flip buttons stop propagation and never select, clear, or filter. Back-face background and the dedicated back control both return to Front.
-- Right-click uses native card or blank-space context menus. Tooltips use Power BI’s native/default and enhanced-tooltip support.
-- Hidden faces are `aria-hidden`, inert, removed from tab order, and unable to receive pointer events. Native buttons support mouse, touch, Enter, and Space, with visible focus transfer between face controls.
-- Face state survives resize, ordinary formatting updates, and too-small recovery for stable identities. New identities start on Front; disabling Flip returns to Front.
-- High contrast replaces authored colors, and `prefers-reduced-motion` forces zero-duration face changes.
+- Re-import the 1.2.0 `.pbiviz`.
+- Explicitly saved compatible 1.1.0 paths remain supported. Migration order is explicit 1.2 property, explicitly saved compatible 1.1 property, then the 1.2 default. Raw metadata presence—not class defaults—determines whether a setting was saved.
+- If `cardAppearance.backBackground` was explicitly saved, it seeds the new back header, back content, and status background only where the new paths are absent. The legacy path remains a hidden compatibility descriptor and never directly drives rendering.
+- Unsaved face-layout and motion properties receive 1.2.0 defaults. Reset to default or a new visual instance is the way to obtain every new default.
+- The formatting model emits Reset descriptors for the hidden legacy path, but whether Power BI Desktop removes hidden legacy metadata is host behavior and was not Desktop-verified.
 
-## Format pane
+## Development and validation
 
-Seven cards use progressive disclosure: **Card**, **Layout**, **Label**, **Callout value**, **Benchmark and status**, **Flip and details**, and **Interactions**. Core controls are always available. Multi-card subsettings appear only when enabled, Fixed dimensions only in Fixed sizing, benchmark settings only when enabled, and back/flip settings only when enabled. Legacy settings remain hidden compatibility metadata; legacy Default Face is ignored.
-
-## Upgrade note
-
-- Re-import the new `.pbiviz`.
-- Compatible explicitly saved formatting is retained: an explicitly saved new property wins; otherwise a compatible explicitly saved legacy property may migrate; otherwise the neutral 1.1.0 default applies.
-- 1.1.0 intentionally defaults to strict Single. An upgraded instance with multiple Label rows and no explicitly saved new mode may show the configuration message until **Auto** or **Multiple** is enabled. The visual does not attempt unreliable legacy-instance detection.
-- Legacy Default Face never exposes the back when Flip is disabled.
-- Use **Reset to default** or create a new instance to obtain all neutral defaults.
-
-## Install and build
-
-In Power BI Desktop, import `flipCardVisualFC7B9C3E9690417084C0A63577A86637.1.1.0.0.pbiviz` through **Import a visual from a file**. To build locally, use Node.js 24 and npm 11 from `flipCardVisual`:
+Use Node 24.16.0 and npm 11 from `flipCardVisual`:
 
 ```powershell
 npm ci
+npx playwright install chromium
 npm run lint
 npm run typecheck
 npm test
+npm run test:visual
 npm run build:dev
 npm run build:prod
 npm run package
@@ -92,27 +93,31 @@ npm audit
 npm audit --omit=dev
 ```
 
-The local pinned `pbiviz` writes the artifact to `flipCardVisual/dist/flipCardVisualFC7B9C3E9690417084C0A63577A86637.1.1.0.0.pbiviz`. Build scripts use `--all-locales` for the current formatting-utilities/tooling combination. `pwsh` is needed only when the tools generate a development certificate; no certificate is tracked.
+CI uses `npx playwright install --with-deps chromium`. The browser harness bundles Inter test weights and waits for `document.fonts.ready` and `document.fonts.check` before geometry assertions. Screenshots under ignored `test-results` are inspection artifacts, not tracked visual-regression baselines. See [Testing](docs/TESTING.md).
 
-## Manual Power BI Desktop smoke test
+The package is written to `flipCardVisual/dist/flipCardVisualFC7B9C3E9690417084C0A63577A86637.1.2.0.0.pbiviz`.
 
-Power BI Desktop was not available for this release, so perform these checks before distribution:
+## Power BI Desktop smoke test
 
-1. Re-import 1.1.0.0. Confirm compatible saved formatting remains. Confirm a legacy multi-Label instance with no new mode may require enabling Auto/Multiple; test Reset to default and a new neutral instance.
-2. Add/remove Card Value and verify missing, no-data, invalid, too-small, and ready states never mix cards with a landing message.
-3. Bind four Vendor rows and test 2×2 Fit layout near 660×290 and 320×200 with no horizontal overflow or unnecessary scrollbar. Test Single, Auto, Multiple, Automatic/Custom columns, and Multiple Fixed with one row.
-4. Resize through tiny and normal sizes; verify content compaction, value legibility, retained face state, and reconstructed DOM.
-5. Enable Flip with Detail and/or Benchmark. Test front/back using mouse, touch, Enter, and Space; test back background; confirm one activation returns and does not change filtering.
-6. Toggle Benchmark off/on. Test Target priority, Comparison fallback, invalid references, negative references, tolerance boundaries, and a zero reference.
-7. Test select, click-again clear, Ctrl/Cmd multi-select, blank-space clear, selection restoration, and identity-less selection inactivity.
-8. Test native/default and enhanced tooltips plus card and blank-space context menus.
-9. Test `fx` for all five paths listed above on categorized cards and an identity-less card. Clear each rule and verify its static constant returns.
-10. Test a high-contrast theme, reduced motion, and PDF/PowerPoint export.
+Desktop validation remains manual. Before distribution:
 
-## Honest limitations
+1. Re-import 1.2.0 over a formatted 1.1.0 instance; verify explicit saved settings, new defaults on unsaved paths, legacy back-background migration, Reset behavior, and a fresh instance.
+2. Add/remove Card Value; bind/unbind Label, Detail, Comparison, Target, and Tooltip fields. Confirm invalid optional values remove their entire rows/sections.
+3. Exercise Single, Auto, Multiple, Fit, and Fixed; verify 320×180 single and four-card 2×2 layouts near 660×290 and 320×200.
+4. Test Auto, Stacked, and Split fronts; Auto, List, and Tiles backs; long labels; large/negative values; currencies, percentages, display units, model precision, and multiple cultures.
+5. Verify Target/Comparison wording, explicit reference names, exact target, tolerance, higher/lower-is-better, improvement, decline, unchanged, negative references, and zero references.
+6. Flip with mouse, touch, Enter, and Space. Test Horizontal Left/Right, Vertical Up/Down, Fade, None, every easing/perspective/duration, repeated activation, transition cancellation/fallback, and resize/format updates during motion.
+7. Verify selection, click-again deselection, Ctrl/Cmd multi-select, blank-space clear, restored host selection, native/default and enhanced tooltips, and card/blank context menus. Confirm all flip actions make zero selection-manager calls.
+8. Inspect the exact seven Format cards and named groups, top-level switches, conditional slice visibility, all icon/style/shape combinations, and the separate Details cue with reserved cluster space.
+9. Exercise all five native `fx` paths; clear every rule and confirm the static constant returns. Verify status `fx` affects both faces but not insight.
+10. Test high contrast, reduced motion, keyboard entry/exit without focus trapping, screen-reader output, identity-less semantics, and PDF/PowerPoint export.
 
-- Live Desktop field-well persistence, cross-visual filtering, enhanced-tooltip presentation, high-contrast themes, and export were not automated or claimed as Desktop-verified.
-- The visual does not implement unrelated optional features reported by the Power BI tools, including highlighting, localization, drill-down, analytics-pane features, images, or sparklines.
-- The project is not AppSource-certified and ships English authoring strings.
+## Limitations
 
-Source: [github.com/RonanVergara/PowerBI-FlipCard](https://github.com/RonanVergara/PowerBI-FlipCard) · [MIT license](LICENSE) · [development notes](docs/DEVELOPMENT_LOG.md) · [changelog](CHANGELOG.md)
+- Power BI Desktop upgrade behavior, field-well persistence, cross-visual filtering, enhanced-tooltip presentation, high-contrast themes, screen-reader behavior, and PDF/PowerPoint export were not automated or claimed as Desktop-verified.
+- The installed Power BI API exposes several required formatting enums as declaration-only const enums that are unavailable at the Vitest runtime. Typed named compatibility constants are used and regression-tested; the supported runtime values are unchanged.
+- The host’s treatment of hidden metadata during Reset to default cannot be proven outside Desktop even though the descriptor is emitted.
+- The `.pbiviz` package schema carries author/version/resource metadata but no project-license field; MIT is verified in the repository `LICENSE` and npm package metadata.
+- The release intentionally adds no data roles, analytics-pane features, highlighting expansion, localization expansion, sparklines, images, downloads, drill-down, timed rotation, or whole-card flip.
+
+Source: [GitHub](https://github.com/RonanVergara/PowerBI-FlipCard) · [MIT license](LICENSE) · [development log](docs/DEVELOPMENT_LOG.md) · [changelog](CHANGELOG.md)

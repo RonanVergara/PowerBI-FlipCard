@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { extractDataView } from "../src/data";
-import { getVarianceDisplayText, prepareTooltipItems } from "../src/valueFormatting";
+import { createKpiPresentation, getVarianceDisplayText, prepareTooltipItems } from "../src/valueFormatting";
 import { createDataView, createHostFixture, fill, setCategoryObjects, setValueObjects } from "./helpers";
 
 const formatting = { detail: { displayUnits: 0, precision: undefined }, main: { displayUnits: 0, precision: undefined } };
@@ -83,10 +83,26 @@ describe("extractDataView and model formatting", () => {
     it("builds zero-safe variance and meaningful feature-gated tooltips", () => {
         const card = extract(createDataView({ cardValues: [10], comparisonValues: [0], detailValues: [4], targetValues: [8] })).cards[0]!;
         card.varianceText = getVarianceDisplayText(card, "percentage", "en-US", formatting.detail);
+        card.presentation = createKpiPresentation(card, "percentage", "en-US", formatting.detail);
         prepareTooltipItems(card, { benchmark: false, detail: false });
         expect(card.tooltipItems.map((item) => item.displayName)).toEqual(["Revenue"]);
         prepareTooltipItems(card, { benchmark: true, detail: true });
-        expect(card.tooltipItems.some((item) => item.value.includes("zero reference"))).toBe(true);
+        expect(card.presentation.insight?.text).toContain("vs Previous Month");
+        expect(card.presentation.insight?.text).not.toMatch(/NaN|Infinity|unavailable/);
         expect(card.tooltipItems.map((item) => item.displayName)).toEqual(expect.arrayContaining(["Orders", "Previous Month", "Target"]));
+    });
+
+    it("builds viewport-independent reference-aware presentation without duplicating references", () => {
+        const card = extract(createDataView({ cardValues: [125.5], comparisonValues: [112], targetValues: [120] })).cards[0]!;
+        card.presentation = createKpiPresentation(card, "percentage", "en-US", formatting.detail);
+        expect(card.presentation.insight?.text).toMatch(/vs Previous Month$/);
+        expect(card.presentation.status?.text).toContain("Target");
+        expect(card.presentation.status?.referenceName).toBe("Target");
+    });
+
+    it("formats large negative and negative-reference variance safely", () => {
+        const card = extract(createDataView({ cardFormat: "$#,0.00", cardValues: [-94000], comparisonValues: [-100000] })).cards[0]!;
+        card.presentation = createKpiPresentation(card, "both", "en-US", { displayUnits: 1000, precision: 1 });
+        expect(card.presentation.insight?.text).toMatch(/6\.0.*K.*6\.0%.*Previous Month/i);
     });
 });

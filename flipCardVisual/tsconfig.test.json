@@ -2,9 +2,10 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "declaration": false,
+    "moduleResolution": "bundler",
     "noEmit": true,
     "types": ["vitest/globals", "node"]
   },
-  "include": ["src/**/*.ts", "test/**/*.ts", "vitest.config.mts"],
+  "include": ["src/**/*.ts", "test/**/*.ts", "visual-tests/**/*.ts", "playwright.config.ts", "vite.config.mts", "vitest.config.mts"],
   "exclude": ["node_modules", "dist", ".tmp"]
 }
